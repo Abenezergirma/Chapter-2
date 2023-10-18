@@ -1,0 +1,363 @@
+classdef RewardFunctionExperiments
+    properties
+        % Use the concept of composition to import the two vehicle models
+        lowFidelityModel  = TrajectoryPlanning.Ownship(); % Low-fidelity UAV model
+        timeStep = 0.1;
+
+        highFidelityModelPath
+        highFidelityModelRunner
+        highFidelityModel % High-fidelity Simulink model
+        BatteryParams % full name for the .mat that stores the battery related parameters
+        energyRequirement % full name for the .mat file that stores the energy requirements of the mission
+        resultsPath
+        experimentName
+
+        maxTotalPower  % Maximum total power for normalization
+    end
+
+    methods
+        function obj = RewardFunctionExperiments(maxTotalPower)
+            % Constructor for the class
+            obj.maxTotalPower = maxTotalPower;
+        end
+
+        function controlCombinations = generateControlCombinations(obj)
+            % Generate all combinations of control actions
+            % Return an array of control action combinations
+            controlCombinations = obj.lowFidelityModel.T18Actions;
+        end
+
+        function trajectories = runLowFidelityModel(obj, controlCombinations, simulationTime)
+            % Run low-fidelity model simulation
+            % Return a set of trajectories for each control action
+            % timeStep = obj.lowFidelityModel.timeStep;
+            trajectories = obj.lowFidelityModel.discreteOctocopterModel(obj.lowFidelityModel,controlCombinations,obj.timeStep, ...
+                simulationTime/obj.timeStep);
+        end
+
+        function waypoints = convertTrajectoriesToWaypoints(obj, trajectories, numWaypoints)
+            % Converts the set of trajectories generated from the control
+            % actions to waypoints. The trajectories array is a 3D array of size NxMx3,
+            % where N represents the number of trajectories,
+            %       M represents the number of data points in each traj
+            %
+            %
+
+            % Check input dimensions
+            [N, M, numDimensions] = size(trajectories);
+            if numDimensions ~= 3
+                error('Input trajectories must be in [x, y, z] format.');
+            end
+
+            % Calculate step size for each trajectory
+            stepSize = floor((N - 1) / (numWaypoints - 2));
+
+            % Calculate the indices for waypoints
+            waypointIndices = [1, (1:numWaypoints-2) * stepSize + 1, N]; % Include first and last points
+
+            % Initialize waypoints matrix
+            waypoints = zeros(numWaypoints, M, numDimensions);
+
+            % Extract waypoints from trajectories using vectorized operations
+            for i = 1:M
+                waypointIndices_i = waypointIndices ;  % Adjust indices for each trajectory
+                waypoints(:, i, :) = reshape(trajectories(waypointIndices_i,i, :), [numWaypoints, 1, numDimensions]);
+            end
+
+        end
+
+        function smoothedTrajectory = smoothTrajectory(obj, originalTrajectory, smoothness)
+            % originalTrajectory: Nx3 matrix containing [x, y, z] positions of the UAV
+            % smoothness: scalar indicating the number of points for interpolation (higher value = smoother)
+            % smoothedTrajectory: Mx3 matrix containing smoothed [x, y, z] positions
+
+            % Ensure originalTrajectory has enough points
+            if size(originalTrajectory, 1) < 2
+                error('originalTrajectory must contain at least two points.');
+            end
+
+            % Extract x, y, z
+            x = originalTrajectory(:, 1);
+            y = originalTrajectory(:, 2);
+            z = originalTrajectory(:, 3);
+
+            % Create original parameterization
+            tOriginal = 1:length(x);
+
+            % Create smooth parameterization
+            tSmooth = linspace(1, length(x), smoothness);
+
+            % Spline interpolation
+            xSmooth = spline(tOriginal, x, tSmooth);
+            ySmooth = spline(tOriginal, y, tSmooth);
+            zSmooth = spline(tOriginal, z, tSmooth);
+
+            % Combine smoothed x, y, z
+            smoothedTrajectory = [xSmooth', ySmooth', zSmooth'];
+        end
+
+        function smoothedTrajectories = smoothTrajectoryVectorized(obj, originalTrajectories, smoothness)
+            % originalTrajectories: NxMx3 matrix containing [x, y, z] positions of M UAVs
+            % smoothness: scalar indicating the number of points for interpolation (higher value = smoother)
+            % smoothedTrajectories: NxMx3 matrix containing smoothed [x, y, z] positions for each UAV
+
+            % Ensure originalTrajectories has enough points
+            if size(originalTrajectories, 1) < 2
+                error('originalTrajectories must contain at least two points.');
+            end
+
+            % Get the number of waypoints (N), the number of aircraft (M), and the dimensionality (3)
+            [N, M, dim] = size(originalTrajectories);
+
+            % Create original parameterization
+            tOriginal = 1:N;
+
+            % Create smooth parameterization
+            tSmooth = linspace(1, N, smoothness);
+
+            % Initialize the matrix to store smoothed trajectories
+            smoothedTrajectories = zeros(smoothness, M, dim);
+
+            % Loop through each UAV
+            for i = 1:M
+                % Extract x, y, z for the current UAV
+                trajectory = originalTrajectories(:, i, :);
+
+                % Initialize matrices for smoothed dimensions
+                smoothedDimensions = zeros(smoothness, dim);
+
+                % Spline interpolation for x, y, z
+                for d = 1:dim
+                    % Perform spline interpolation
+                    smoothedDimensions(:, d) = spline(tOriginal, trajectory(:, d), tSmooth);
+                end
+
+                % Assign the smoothed dimensions to the output
+                smoothedTrajectories(:, i, :) = smoothedDimensions;
+            end
+        end
+
+
+
+
+        function waypoints = NewconvertTrajectoriesToWaypoints(obj, trajectories, numWaypoints)
+            % Converts the set of trajectories generated from the control
+            % actions to waypoints. The trajectories array is a 3D array of size NxMx3,
+            % where N represents the number of trajectories,
+            %       M represents the number of data points in each traj
+            %
+
+            % Check input dimensions
+            [N, M, numDimensions] = size(trajectories);
+            if numDimensions ~= 3
+                error('Input trajectories must be in [x, y, z] format.');
+            end
+
+            % Initialize waypoints matrix
+            waypoints = zeros(numWaypoints, M, numDimensions);
+
+            % Define the parameter values for the original and interpolated trajectories
+            origParamValues = linspace(0, 1, N);
+            interpParamValues = linspace(0, 1, numWaypoints);
+
+            % Extract waypoints from trajectories using interpolation
+            for i = 1:M
+                for j = 1:numDimensions
+                    waypoints(:, i, j) = interp1(origParamValues, trajectories(:, i, j), interpParamValues, 'linear');
+                end
+            end
+        end
+
+
+        function plotTrajectoryAndWaypoints(obj,trajectories, waypoints)
+            % Extract x, y, and z coordinates from trajectories and waypoints
+            x_traj = trajectories(:, 1);
+            y_traj = trajectories(:, 2);
+            z_traj = trajectories(:, 3);
+
+            x_waypoints = waypoints(:, 1);
+            y_waypoints = waypoints(:, 2);
+            z_waypoints = waypoints(:, 3);
+
+            % Plot the trajectory
+            figure;
+            plot3(x_traj, y_traj, z_traj, 'b-', 'LineWidth', 1.5);
+            hold on;
+
+            % Plot the waypoints
+            scatter3(x_waypoints, y_waypoints, z_waypoints, 100, 'ro', 'filled');
+
+
+            xlabel('X');
+            ylabel('Y');
+            zlabel('Z');
+            title('Trajectory and Waypoints');
+            grid on;
+
+            % Adjust view and display the plot
+            view(3);
+            axis equal;
+            hold off;
+            % Set the filename for the PNG image
+            filename = fullfile(obj.resultsPath,'trajectoryAndWaypoint.png');
+
+            % Use the print function to save the figure as a PNG image
+            print(filename, '-dpng'); % '-dpng' specifies the format, '-r300' sets the resolution (dpi)
+        end
+
+
+        function obj = getPowerConsumption(obj)
+            % add a for loop here
+            % obj.highFidelityModel = SimulinkUAVWrapper(obj.highFidelityModelPath, obj.highFidelityModelRunner);
+            % experimentPath = obj.highFidelityModel.resultsPath;
+            % resultFileName = sprintf('rewardExperiment.mat');
+            % resultFilePath = fullfile(experimentPath, resultFileName);
+            % Load energy related UAV parameters from the .mat file
+            load(obj.BatteryParams);%, 'SOC', 'totalCurrent','voltage');
+            reqEnergy = [];
+
+            numExperiments  = size(results,1);
+            for k = 1:numExperiments
+                SOC = results{k,1};
+                totalCurrent = results{k,2};
+                voltage = results{k,3};
+                % totalEnergy = computeTotalEnergy(obj, totalCurrent, voltage, SOC);
+                energyAtPoints = computeEnergyAtPoints(obj, totalCurrent, voltage, SOC);
+                reqEnergy = [reqEnergy;energyAtPoints];
+            end
+            energyFileName = obj.energyRequirement;
+            energyFilePath = fullfile(obj.resultsPath, obj.energyRequirement);
+            save(energyFilePath,"reqEnergy");
+        end
+
+        function totalEnergy = computeTotalEnergy(obj, current, voltage, soc)
+            % Check if input arrays have the same length
+            if numel(current) ~= numel(voltage) || numel(current) ~= numel(soc)
+                error('Input arrays must have the same length.');
+            end
+
+            % Convert current and voltage to Watts
+            power = current .* voltage;
+
+            % Replace with the actual time step (in seconds) if needed
+            % timeStep = obj.highFidelityModel.timeStep;
+
+            % Compute energy using trapezoidal integration
+            energy = trapz(power) * obj.timeStep;
+
+            % Convert energy to Watt-hours
+            energyWh = energy / 3600; % 1 Wh = 3600 J
+
+            totalEnergy = energy;
+        end
+
+        function energyAtPoints = computeEnergyAtPoints(obj, current, voltage, soc)
+            % Check if input arrays have the same length
+            if numel(current) ~= numel(voltage) || numel(current) ~= numel(soc)
+                error('Input arrays must have the same length.');
+            end
+
+            % Convert current and voltage to Watts
+            power = current .* voltage;
+
+            % Generate 10 equally spaced indices along the trajectory
+            indices = round(linspace(1, numel(current), 10));
+
+            % Initialize array to store energy at 10 points
+            energyAtPoints = zeros(1, 10);
+
+            % Compute energy at each point using trapezoidal integration
+            for i = 1:10
+                if i == 1
+                    % For the first point, integrate from the start to the first index
+                    energyAtPoints(i) = trapz(power(1:indices(i))) * obj.timeStep;
+                else
+                    % For subsequent points, integrate from the previous index to the current index
+                    energyAtPoints(i) = trapz(power(indices(i-1):indices(i))) * obj.timeStep;
+                end
+                % Convert energy to Watt-hours
+                % energyAtPoints(i) = energyAtPoints(i) / 3600; % 1 Wh = 3600 J
+            end
+        end
+
+
+
+        function obj = runHighFidelityModel(obj, setWaypoints)
+
+            obj.highFidelityModel = EnergyRequirement.SimulinkUAVWrapper(obj.highFidelityModelPath);
+            obj.highFidelityModel.modelScript = obj.highFidelityModelRunner;
+            obj.highFidelityModel.experimentName = obj.experimentName;
+            obj.highFidelityModel.resultsPath = obj.resultsPath;
+
+            disp('This experiment is to generate energy-related reward function');
+            obj.highFidelityModel.runModel(setWaypoints);
+
+        end
+
+        function fittedFunction = createFittedEnergyFunction(obj,sampleEnegry)
+            % Fit a curve to sampleEnegry
+            x = 1:20:10000;
+            fittedCurve = fit(x', sampleEnegry, 'smoothingspline');
+
+            % Create a function that takes an experiment number and returns the values
+            fittedFunction = @(experimentNumber) feval(fittedCurve, experimentNumber);
+        end
+
+        function fittedFunction = create2DFittedEnergyFunction(obj, sampleEnergy)
+            % Check the size of sampleEnergy
+            [numExperiments, numTimeSteps] = size(sampleEnergy);
+
+            if numTimeSteps ~= 10
+                error('The second dimension of sampleEnergy must be 10.');
+            end
+
+            % Define x and y
+            x = 1:numExperiments;
+            y = 1:numTimeSteps;
+
+            % Create a grid of x and y values
+            [X, Y] = meshgrid(x, y);
+
+            % Reshape sampleEnergy to be a column vector
+            Z = reshape(sampleEnergy', [], 1);
+
+            % Reshape X and Y to be column vectors
+            X = reshape(X, [], 1);
+            Y = reshape(Y, [], 1);
+
+            % Fit a 2D surface to the data
+            [fittedSurface, gof] = fit([X, Y], Z, 'poly33'); % try a different model
+
+            % Create a function that takes an experiment number and time step and returns the values
+            fittedFunction = @(experimentNumber, timeStep) feval(fittedSurface, [experimentNumber, timeStep]);
+
+            % Optional: Display the fitted surface
+            figure;
+            plot(fittedSurface, [X, Y], Z);
+            title('Fitted Surface');
+            xlabel('Experiment Number');
+            ylabel('Time Step');
+            zlabel('Energy');
+            legend('Data', 'Fitted Surface');
+            grid on;
+        end
+
+        function plotFittedSurface(obj, fittedFunction)
+        end
+
+
+        function rewards = calculateRewards(obj, powerConsumptionData)
+            rewards = zeros(length(powerConsumptionData), 1);
+            for i = 1:length(powerConsumptionData)
+                totalPower = powerConsumptionData{i}.totalPower;
+                normalizedPower = totalPower / obj.maxTotalPower;
+
+                % Calculate penalty and reward
+                penalty = 1 - normalizedPower;
+                reward = normalizedPower;
+
+                rewards(i) = reward;
+            end
+        end
+    end
+end
