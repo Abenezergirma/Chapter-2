@@ -41,7 +41,7 @@ The project is organized into several key components:
 
 ### Decision Maker
 
-- **Main.py**: The main script that runs the entire system and makes decisions based on the risk assessment.
+- **decision maker.py**: The main script that runs the entire system and makes decisions based on the risk assessment.
 
 ## Usage
 
@@ -59,15 +59,15 @@ The project is organized into several key components:
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to this project, please follow our [contribution guidelines](CONTRIBUTING.md).
+We welcome contributions from the community! If you'd like to contribute to this project, please follow our
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE.md).
+This project is licensed under 
 
 ## Contact
 
-For questions or inquiries, please contact [Your Name](mailto:youremail@example.com).
+For questions or inquiries, please contact
 
 ---
 
