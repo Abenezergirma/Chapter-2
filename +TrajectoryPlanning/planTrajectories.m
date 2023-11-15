@@ -1,15 +1,13 @@
-function plotTrajectories(experimentName, energyRewardRate)
+function plotTrajectories(experimentName)
 % clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
 %% Initialization
 resultsPath = 'TrajectoryPlanningResults';
 totalAgents = 6;
-energyReqPerAction = 'RewardFunctionExperimentResults/interpolatedEnergyReqs.mat';
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,energyReqPerAction);
-planner.energyRewardRate = energyRewardRate;
+planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
 %% Generate Initial States and Goals
 [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
@@ -28,7 +26,8 @@ j = 0;
 while numLeft > 0
     tic  % Start timer
 
-    droneList = updateDrones(droneList, planner, teamActions);
+    % droneList = updateDrones(droneList, planner, teamActions);
+    [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft);
 
     % Monitor the status of the game
     [terminal, NMACs, droneList] = planner.terminalDetection(droneList);
@@ -56,8 +55,8 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
         drone = updateAircraftStates(drone, initState);
     end
 
-    function droneList = updateDrones(droneList, planner, teamActions)
-        numLeft = size(droneList, 2);
+    function [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft)
+        % numLeft = size(droneList, 2);
         for k = 1:numel(droneList)
             ownship = droneList{k};
             if ~ownship.dead

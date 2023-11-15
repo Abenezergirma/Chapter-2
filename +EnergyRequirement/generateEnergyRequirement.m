@@ -2,7 +2,7 @@ function generateEnergyReqiurement(experimentName)
 % This script is used to generate battery related parameters (such as voltage, current) for the full
 % flight mission
 % clear all; clc
-projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2';
+projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2';
 
 %% Load Trajectory Data
 % Load x, y, and z trajectories from the specified files
@@ -26,13 +26,13 @@ load(filePathZ)
 %% Define File and Path Related Properties
 % Define all file and path-related properties in a structured way
 % Define model path
-modelPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2/+EnergyRequirement/UAVSimulinkModel';
+modelPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/+EnergyRequirement/UAVSimulinkModel';
 
 % Create an instance of SimulinkUAVWrapper and set properties
 T18Wrapper = EnergyRequirement.SimulinkUAVWrapper(modelPath);
 T18Wrapper.modelScript = 'runDetailedT18Model';
 T18Wrapper.experimentName = strcat(experimentName,'fullMissionBatteryParams.mat');
-T18Wrapper.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2/EnergyRequirementResults';
+T18Wrapper.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
 
 % Construct the full path for battery parameters
 T18Wrapper.BatteryParams = fullfile(T18Wrapper.resultsPath,T18Wrapper.experimentName);

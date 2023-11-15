@@ -407,6 +407,7 @@ classdef RewardFunctionExperiments
 
         function plotPowerProfiles(obj, withoutEnergyReward, withEnergyReward, uav)
 
+            % for uav = 1:6
             [SOC,totali,voltage,postraj,refpostraj,time,timeb] = deal(withoutEnergyReward{uav,1},withoutEnergyReward{uav,2},withoutEnergyReward{uav,3}, ...
                 withoutEnergyReward{uav,4},withoutEnergyReward{uav,5},withoutEnergyReward{uav,6},withoutEnergyReward{uav,7});
 
@@ -420,7 +421,7 @@ classdef RewardFunctionExperiments
             % plot3(postraj(:,1),postraj(:,2),postraj(:,3))
             % hold on
             % plot3(refpostraj(:,1),refpostraj(:,2),refpostraj(:,3))
-
+            % end
 
             powerProfile1 = totali.*voltage;
             powerProfile2 = totali1.*voltage1;
