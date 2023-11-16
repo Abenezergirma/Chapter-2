@@ -1,4 +1,4 @@
-function plotTrajectories(experimentName)
+function plotTrajectories(experimentName,energyRewardRate)
 % clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
@@ -8,6 +8,7 @@ totalAgents = 6;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
 planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
+planner.energyRewardRate = energyRewardRate;
 %% Generate Initial States and Goals
 [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 

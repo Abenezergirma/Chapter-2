@@ -1,10 +1,13 @@
 % The main script that runs the whole Matlab code
 clear all; clc
-experimentName = {'withoutEnergyReward', 'withEnergyReward'};
-energyRewardRate = [0,1];
-for k = 2:length(experimentName)
-TrajectoryPlanning.planTrajectories(experimentName{k})
-EnergyRequirement.generateEnergyRequirement(experimentName{k})
+% experimentName = {'withoutEnergyReward', 'withEnergyReward'};
+experimentName = 'testingEnergyReward';
+energyRewardRate = [0,0.1,0.2,0.3,0.4,0.5];
+
+for k = 1:length(experimentName)
+    fullName = strcat(experimentName,'rewardRate',num2str(energyRewardRate(k)));
+    TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
+    EnergyRequirement.generateEnergyRequirement(fullName)
 end
 
 resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';

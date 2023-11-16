@@ -4,6 +4,7 @@ classdef Planner < TrajectoryPlanning.Ownship
         totalAgents
         totalNMACs
         experimentName
+        energyRewardRate
     end
 
     methods(Access = private)
@@ -22,7 +23,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                 case {'hexagon'}
                     % Define Parameters
                     centerPoint = [0, 0];  % Center point
-                    apothem = 500;         % Length of points from the center
+                    apothem = 1000;         % Length of points from the center
 
                     % Generate Hexagon Points
                     hexagonPoints = generateHexagon(obj, centerPoint, apothem);
@@ -278,12 +279,13 @@ classdef Planner < TrajectoryPlanning.Ownship
                 penalityFunc = 5000 - altitude;
                 totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc(belowLevel);
             end
-            if strcmp(obj.experimentName,'withEnergyReward')
+            if obj.energyRewardRate ~= 0
                 % Add battery energy related rewards
                 distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
-                energyReq = 2067*exp(0.0128*distances);
+                % energyReq = 2067*exp(0.0128*distances);
+                energyReq = predictEnergy(obj,distances);
 
-                energyReward = energyReq.*linspace(0,0.1,size(energyReq,1))';
+                energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq,1))'; %change energyRewardRate
             else
                 energyReward = 0;
 
@@ -311,28 +313,15 @@ classdef Planner < TrajectoryPlanning.Ownship
             % Calculate the Euclidean distances with altitude sign adjustment
             distances = sqrt(sum(deltaPosition.^2, 3));
         end
-        % function [xyDistances, altitudeChange] = calculateDistances(obj, ownshipCurrentStates, states)
-        %     % Extract sizes
-        %     numExperiments = size(states, 2);
-        %     numWaypoints = size(states, 1);
-        % 
-        %     % Expand the reference state to match the dimensions of states
-        %     expandedReference = repmat(ownshipCurrentStates, [numWaypoints, 1, numExperiments]);
-        % 
-        %     % Permute expandedReference to match the desired dimensions
-        %     expandedReference = permute(expandedReference, [1, 3, 2]);
-        % 
-        %     % Calculate the change in position (deltaPosition) relative to the reference
-        %     deltaPosition = states - expandedReference;
-        % 
-        %     % Calculate the (x,y) Euclidean distances
-        %     xyDistances = sqrt(sum(deltaPosition(:,:,1:2).^2, 3));
-        % 
-        %     % Calculate the change in altitude (z)
-        %     altitudeChange = deltaPosition(:,:,3);
-        % end
 
+        function energyArray = predictEnergy(obj,distances)
+            % Define the coefficients for each step
+            aCoeffs = [0, 520.699, 203.742, 127.606, 86.3024, 71.8159, 63.1053, 57.9294, 50.7294, 46.399];
+            bCoeffs = [0, 369.168, 869.01, 1119.61, 1459.52, 1368.97, 1279.89, 1128.54, 1144.29, 1183.82];
 
+            % Calculate the energy using the linear function in a vectorized way
+            energyArray = aCoeffs' .* distances + bCoeffs';
+        end
 
         function [optimizedValues, allValues] = valueOptimized(obj,distanceToPeaks, rewardLimits,discountFactor, rewards)
 
