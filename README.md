@@ -1,6 +1,6 @@
 # Pre‑departure Flight Planning and Risk Assessment for UAM/UAS under Battery Constraint
 
-![Project Image](project_image.png) <!-- Add an image illustrating your project-->
+![Project Image](framework.png) <!-- Add an image illustrating your project-->
 
 ## Overview
 
