@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Urban Air Mobility Decision-Making Framework is a comprehensive software solution designed to assess the risk of flight missions in urban air mobility applications. It uses a hierarchical architecture that combines trajectory planning, energy requirement modeling, battery prognostics, and decision-making to determine whether a flight mission should proceed. The framework provides insights into mission feasibility, battery health, and risk assessment.
+This repository contains the implementation of a decision-making framework for Urban Air Mobility (UAM) and Unmanned Aerial Systems (UAS) operations, focusing on enhancing collision safety and battery energy use. The framework features a novel two-layer algorithm: the upper layer performs strategic de-confliction, and the lower layer handles prognostics and decision-making for mission execution.
 
 ## Project Structure
 
