@@ -62,15 +62,9 @@ The project is organized into several key components:
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to this project, please follow our
+We welcome contributions from the community! If you'd like to contribute to this project, please feel free to do so.
 
-## License
 
-This project is licensed under 
-
-## Contact
-
-For questions or inquiries, please contact
 
 ---
 
