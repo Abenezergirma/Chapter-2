@@ -23,6 +23,36 @@ load(filePathX)
 load(filePathY)
 load(filePathZ)
 
+numAircraft = size(xTraj, 1);  % Number of aircraft
+N = size(xTraj, 2);            % Original length of trajectories
+
+% Initialize new arrays with two additional columns for the new points
+newXTraj = zeros(numAircraft, N + 2);
+newYTraj = zeros(numAircraft, N + 2);
+newZTraj = zeros(numAircraft, N + 2);
+
+% for i = 1:numAircraft
+%     % Extract the initial and final coordinates for each aircraft
+%     initialX = xTraj(i, 1);
+%     initialY = yTraj(i, 1);
+%     initialZ = zTraj(i, 1) - 50;  % 100 meters below the initial z value
+% 
+%     finalX = xTraj(i, end);
+%     finalY = yTraj(i, end);
+%     finalZ = zTraj(i, end) - 50;  % 100 meters below the final z value
+% 
+%     % Construct new trajectories with added points
+%     newXTraj(i, :) = [initialX, xTraj(i, :), finalX];
+%     newYTraj(i, :) = [initialY, yTraj(i, :), finalY];
+%     newZTraj(i, :) = [initialZ, zTraj(i, :), finalZ];
+% end
+% 
+% % Replace old trajectories with the new ones
+% xTraj = newXTraj;
+% yTraj = newYTraj;
+% zTraj = newZTraj;
+
+
 %% Define File and Path Related Properties
 % Define all file and path-related properties in a structured way
 % Define model path
@@ -37,16 +67,16 @@ T18Wrapper.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/En
 % Construct the full path for battery parameters
 T18Wrapper.BatteryParams = fullfile(T18Wrapper.resultsPath,T18Wrapper.experimentName);
 numDrones = size(xTraj,1);
-numWaypoints = 30;
+numWaypoints = 15;
 
 % Concatenate trajectories and smooth them
 trajectories = cat(3, xTraj', yTraj', zTraj');
 wayPoints = T18Wrapper.smoothTrajectoryVectorized(trajectories, numWaypoints);
 %% Visualization
 % Specify the UAV to visualize and plot its trajectory and waypoints
-uav = 6;
+for uav =1:6
 T18Wrapper.plotTrajectoryAndWaypoints([xTraj(uav,:)', yTraj(uav,:)', zTraj(uav,:)'], wayPoints(:,uav,:))
-
+end
 %% Model Execution
 % Run the Simulink model
 % if false

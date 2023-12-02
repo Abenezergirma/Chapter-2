@@ -79,7 +79,7 @@ class BatteryPrognostics:
         battery = Battery(measurement_noise=R_vars)
         initial_state = battery.parameters["x0"]
         battery.parameters["VEOD"] = self.VEOD  # put the user defined VEOD here
-        INITIAL_UNCERT = 20  # Uncertainty in initial state (%)
+        INITIAL_UNCERT = 30  # Uncertainty in initial state (%)
         
         # Construct covariance matrix (making sure each value is positive)
         cov = np.diag(

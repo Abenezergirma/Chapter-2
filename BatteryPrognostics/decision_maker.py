@@ -16,7 +16,8 @@ class MissionRiskAssessment(PlotsPaper):
                 # Extract the last element of each profile as SOC
                 SOC = [profile[-1] for profile in soc_profile]
                 success_count = sum(soc > self.threshold for soc in SOC)
-                success_probability = success_count / len(SOC)                
+                success_probability = success_count / len(SOC)      
+                print(success_probability)          
                 probability_success.append(success_probability)
                     
         return probability_success
@@ -37,6 +38,6 @@ class MissionRiskAssessment(PlotsPaper):
 if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.abspath(__file__))  # Get the current directory of the script
     pickle_file_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles")
-    threshold = 0.4  
+    threshold = 0.3 
     mission_assessment = MissionRiskAssessment(pickle_file_path, threshold)
     mission_assessment.make_decision()

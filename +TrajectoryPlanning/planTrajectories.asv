@@ -1,22 +1,26 @@
-function plotTrajectories(experimentName)
-clear; close all; clc;
+function plotTrajectories(experimentName,energyRewardRate)
+% clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
 %% Initialization
 resultsPath = 'TrajectoryPlanningResults';
 totalAgents = 6;
-energyReqPerAction = 'RewardFunctionExperimentResults/interpolatedEnergyReqs.mat';
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,energyReqPerAction);
-
+planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
+planner.energyRewardRate = energyRewardRate;
 %% Generate Initial States and Goals
-[initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
+% [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
 %% Instantiate Ownship Class for Each Aircraft
+[assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
+yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+
+initialStates = [assignedInitials,zeros(totalAgents,9)];
+initialStates(:)
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
-    droneList{i} = initializeDrone(i, initialStates(i,:), goals(i,1:3));
+    droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));
 end
 
 %% Main Simulation Loop
@@ -28,7 +32,8 @@ j = 0;
 while numLeft > 0
     tic  % Start timer
 
-    droneList = updateDrones(droneList, planner, teamActions);
+    % droneList = updateDrones(droneList, planner, teamActions);
+    [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft);
 
     % Monitor the status of the game
     [terminal, NMACs, droneList] = planner.terminalDetection(droneList);
@@ -46,7 +51,7 @@ while numLeft > 0
 end
 
 %% Analyze and Save Results
-analyzeAndSaveResults(stepTimer, totalNMACs,droneList);
+analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
 
 %% Supporting Functions
     function drone = initializeDrone(id, initState, goal)
@@ -56,8 +61,8 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList);
         drone = updateAircraftStates(drone, initState);
     end
 
-    function droneList = updateDrones(droneList, planner, teamActions)
-        numLeft = size(droneList, 2);
+    function [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft)
+        % numLeft = size(droneList, 2);
         for k = 1:numel(droneList)
             ownship = droneList{k};
             if ~ownship.dead
@@ -84,7 +89,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList);
         fprintf('Num aircraft left, %d\n', numLeft);
     end
 
-    function analyzeAndSaveResults(stepTimer, totalNMACs, droneList)
+    function analyzeAndSaveResults(stepTimer, totalNMACs, droneList, experimentName)
         resultsPath = 'TrajectoryPlanningResults';
         allNMAC = totalNMACs;
         Mean = mean(stepTimer);
@@ -122,11 +127,11 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList);
         end
         % Create the full file path
         baseFileNameX = strcat(experimentName,'XTrajectory');
-        baseFileNameY = 'YTrajectory';
-        baseFileNameZ = 'ZTrajectory';
-        fileNameX = sprintf('%s_%04d.mat', baseFileNameX, numDrones);
-        fileNameY = sprintf('%s_%04d.mat', baseFileNameY, numDrones);
-        fileNameZ = sprintf('%s_%04d.mat', baseFileNameZ, numDrones);
+        baseFileNameY = strcat(experimentName,'YTrajectory');
+        baseFileNameZ = strcat(experimentName,'ZTrajectory');
+        fileNameX = sprintf('%s_%02d.mat', baseFileNameX, numDrones);
+        fileNameY = sprintf('%s_%02d.mat', baseFileNameY, numDrones);
+        fileNameZ = sprintf('%s_%02d.mat', baseFileNameZ, numDrones);
         filePathX = fullfile(resultsPath, fileNameX);
         filePathY = fullfile(resultsPath, fileNameY);
         filePathZ = fullfile(resultsPath, fileNameZ);

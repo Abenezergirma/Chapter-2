@@ -29,8 +29,8 @@ classdef Ownship < handle
     properties (Access = public)
         % general Aircraft properties
         g = 9.81
-        timeStep = 0.01;
-        numSteps = 500;
+        timeStep = 0.001;
+        numSteps = 1000;
         aircraftActions;
 
         % Aircraft states
@@ -181,9 +181,14 @@ classdef Ownship < handle
         function T18Actions = T18Actions(varargin)
             % Builds an array that stores the action space of each team
             Thrust  = 10.^[linspace(0, log10(100), 5),linspace(log10(120), log10(200), 5)]; %0:25*1:200;
-            tauTheta = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
-            tauPhi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
-            tauPsi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
+            % tauTheta = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
+            % tauPhi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
+            % tauPsi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
+            % tauTheta = [-100.0000 -56.2341  -31.6228  -17.7828 -10.0000 0 10.0000   17.7828   31.6228   56.2341  100.0000];
+            tauTheta = [-56.2341  -31.6228  -17.7828  0   17.7828   31.6228   56.2341 ];
+
+            tauPhi = tauTheta;
+            tauPsi = tauTheta;
             % construct the joint action space that comprises the three action spaces
             actions = {Thrust, tauTheta, tauPhi, tauPsi};
             actionsD = actions;

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<name>Package Delivery Scenario</name>
+<Style id="initialStyle">
+<IconStyle>
+<color>FF507FFF</color>
+<Icon><href>http://maps.google.com/mapfiles/kml/shapes/target.png</href></Icon>
+</IconStyle>
+</Style>
+<Style id="finalStyle">
+<IconStyle>
+<color>FFED9564</color>
+<Icon><href>http://maps.google.com/mapfiles/kml/shapes/ranger_station.png</href></Icon>
+</IconStyle>
+</Style>
+<Placemark>
+<name>Depot 1</name>
+<styleUrl>#initialStyle</styleUrl>
+<Point>
+<coordinates>-96.792586,32.872523,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Depot 2</name>
+<styleUrl>#initialStyle</styleUrl>
+<Point>
+<coordinates>-96.795005,32.852581,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Depot 3</name>
+<styleUrl>#initialStyle</styleUrl>
+<Point>
+<coordinates>-96.814859,32.852165,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 1</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.806916,32.864086,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 2</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.794711,32.862029,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 3</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.815023,32.863482,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 4</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.804654,32.852869,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 5</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.799024,32.863256,0</coordinates>
+</Point>
+</Placemark>
+<Placemark>
+<name>Destination 6</name>
+<styleUrl>#finalStyle</styleUrl>
+<Point>
+<coordinates>-96.814952,32.861800,0</coordinates>
+</Point>
+</Placemark>
+</Document>
+</kml>

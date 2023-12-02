@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<Style id="blueLine">
+<LineStyle>
+<color>FF00BFFF</color>
+<width>5</width>
+</LineStyle>
+</Style>
+<Placemark>
+<styleUrl>#blueLine</styleUrl>
+<LineString>
+<altitudeMode>absolute</altitudeMode>
+<coordinates>
+-96.788959,32.875395,40.000000
+-96.817287,32.875395,40.000000
+-96.817287,32.851601,40.000000
+-96.788959,32.851601,40.000000
+-96.788959,32.875395,40.000000
+</coordinates>
+</LineString>
+</Placemark>
+</Document>
+</kml>

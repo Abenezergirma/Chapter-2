@@ -10,12 +10,17 @@ totalNMACs = 0;
 planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
 planner.energyRewardRate = energyRewardRate;
 %% Generate Initial States and Goals
-[initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
+% [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
 %% Instantiate Ownship Class for Each Aircraft
+[assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
+yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+
+initialStates = [assignedInitials,zeros(totalAgents,9)];
+initialStates(:,9) = yawAngles;
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
-    droneList{i} = initializeDrone(i, initialStates(i,:), goals(i,1:3));
+    droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));
 end
 
 %% Main Simulation Loop
@@ -31,7 +36,7 @@ while numLeft > 0
     [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft);
 
     % Monitor the status of the game
-    [terminal, NMACs, droneList] = planner.terminalDetection(droneList);
+    [terminal, NMACs, droneList] = planner.terminalDetection(droneList,j);
     totalNMACs = totalNMACs + NMACs;
     stepTimer = [stepTimer, toc];  % Record elapsed time
     j = j + 1;
@@ -68,7 +73,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
                 ownship = selectBestAction(ownship, totalValues, futureActions, futureStates, oneStepStates);
                 ownship = updateAircraftStates(ownship, ownship.nextStates);
                 ownship.Traces = 0;
-                if norm(ownship.currentStates(1:3) - ownship.goal) < 10
+                if norm(ownship.currentStates(1:3) - ownship.goal) < 20
                     ownship.dead = true;
                     disp(['ownship ', num2str(ownship.aircraftID), ' made it to goal, removed']);
                     numLeft = numLeft - 1;

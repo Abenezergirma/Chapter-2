@@ -98,7 +98,7 @@ class BatteryExperiment:
         """
         Runs battery prognostics using the data generated from UAV model (MATLAB) 
         """
-        self.print_properties_and_confirm()
+        # self.print_properties_and_confirm()
         self.battery_prog.main()
         # Visualize the prognostics experiment
         self.visualize_prog = VisualizePrognostics(pickle_path)
@@ -117,7 +117,7 @@ class BatteryExperiment:
 if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.abspath(__file__))  # Get the current directory of the script
     for experiment in range(0,6):
-        results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/withEnergyRewardNewfullMissionBatteryParams.mat".format(experiment))
+        results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/packageEnergyRewardrewardRate0.3fullMissionBatteryParams.mat")
         pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/prog_results_{}.pkl".format(experiment))
         experiment = BatteryExperiment(results_directory,pickle_path, experiment)
         experiment.run()

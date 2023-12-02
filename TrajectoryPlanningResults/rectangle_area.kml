@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Placemark>
+<name>Rectangle Area</name>
+<Polygon>
+<extrude>1</extrude>
+<altitudeMode>absolute</altitudeMode>
+<outerBoundaryIs>
+<LinearRing>
+<coordinates>
+-77.028981,38.909823,1000.000000 -77.072219,38.909823,1000.000000 -77.072219,38.892999,1000.000000 -77.028981,38.892999,1000.000000 -77.028981,38.909823,1000.000000
+</coordinates>
+</LinearRing>
+</outerBoundaryIs>
+</Polygon>
+</Placemark>
+</kml>

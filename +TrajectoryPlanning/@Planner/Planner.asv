@@ -4,6 +4,7 @@ classdef Planner < TrajectoryPlanning.Ownship
         totalAgents
         totalNMACs
         experimentName
+        energyRewardRate
     end
 
     methods(Access = private)
@@ -22,7 +23,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                 case {'hexagon'}
                     % Define Parameters
                     centerPoint = [0, 0];  % Center point
-                    apothem = 500;         % Length of points from the center
+                    apothem = 1000;         % Length of points from the center
 
                     % Generate Hexagon Points
                     hexagonPoints = generateHexagon(obj, centerPoint, apothem);
@@ -35,7 +36,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                     Z = hexagonPoints(:, 3);
 
                     % Define Orientation Angles
-                    angleValue = -0.1;
+                    angleValue = 0;
                     psi = ones(numPoints, 1) * angleValue;
                     gamma = ones(numPoints, 1) * angleValue;
                     phi = ones(numPoints, 1) * angleValue;
@@ -90,6 +91,9 @@ classdef Planner < TrajectoryPlanning.Ownship
                     error('scenario building on progress')
             end
         end
+
+
+
     end
 
     methods
@@ -109,6 +113,134 @@ classdef Planner < TrajectoryPlanning.Ownship
                 scenario = varargin{1};
             end
             [initialStates, goals] = obj.generateScenario(N, scenario);
+        end
+        function [assignedInitials, assignedGoals] = packageDeliveryScenario(obj)
+            % Setup DC package delivery scenario
+            % GWU = [38.900529, -77.049058];
+            % sichuanPavilion = [38.902443, -77.042052];
+            % watergateHotel = [38.899612, -77.055408];
+            % initialPositions = [GWU; sichuanPavilion; watergateHotel];
+            % 
+            % traderJos = [38.904193, -77.053129]; %GWU
+            % tonicAtQuincy = [38.898055, -77.046471]; %GWU
+            % foundingFarmers = [38.90028, -77.044415]; %sichuanPavilion
+            % theRitzHotel = [38.904526, -77.049072]; %sichuanPavilion
+            % fourSeason = [38.904269, -77.057294]; %watergateHotel
+            % bakedAndWired = [38.903887, -77.060437]; %watergateHotel
+            % finalPositions = [traderJos;foundingFarmers;tonicAtQuincy;theRitzHotel;fourSeason;bakedAndWired];
+            Maydan = [38.920027, -77.03127];
+            watergateHotel = [38.899612, -77.055408];
+            JoesStake = [38.900027, -77.033922];
+            initialPositions = [Maydan; JoesStake; watergateHotel];
+            cornerLat = [ 38.9228   38.9228   38.8990   38.8990];
+            cornerLon = [-77.0274  -77.0580  -77.0580  -77.0274];
+
+            PhilipsCollection = [38.91151, -77.046854];%Maydan
+            wholeFoolds = [38.909499, -77.033568];%Maydan
+            Dumbarton = [38.910883, -77.055618];%watergateHotel
+            foundingFarmers = [38.90028, -77.044415]; %watergateHotel
+            agoralDC = [38.91063, -77.038251];%JoesStake
+            % MuseumMansion = [38.908363, -77.045874];%JoesStake
+            AperoLa = [38.909246, -77.055494];%JoesStake
+            % finalPositions = [PhilipsCollection;wholeFoolds;Dumbarton;foundingFarmers;agoralDC;AperoLa];
+
+            finalPositions = [PhilipsCollection;wholeFoolds;Dumbarton;foundingFarmers;agoralDC;AperoLa];
+            Dupont = [38.910944, -77.042726, 10];
+
+            origin = Dupont;
+            % Average radius of Earth in meters
+            R = 6371000;
+
+            % Conversion factors
+            metersPerDegreeLat = 111000;
+            metersPerDegreeLon = metersPerDegreeLat * cos(deg2rad(origin(1)));
+
+            % Function to convert lat, lon to x, y
+            latLonToXY = @(lat, lon) [(lon - origin(2)) * metersPerDegreeLon, (lat - origin(1)) * metersPerDegreeLat];
+
+            % Convert initial positions
+            initialXY = zeros(size(initialPositions, 1), 2);
+            for i = 1:size(initialPositions, 1)
+                initialXY(i, :) = latLonToXY(initialPositions(i, 1), initialPositions(i, 2));
+            end
+
+            % Convert final positions
+            finalXY = zeros(size(finalPositions, 1), 2);
+            for i = 1:size(finalPositions, 1)
+                finalXY(i, :) = latLonToXY(finalPositions(i, 1), finalPositions(i, 2));
+            end
+
+            assignedInitials = [initialXY(repmat(1:size(initialXY, 1), 2, 1), :),ones(6,1)*1000];
+            assignedGoals = [finalXY,ones(6,1)*1000];
+        end
+
+        function yawAngles = initializeYaw(obj, assignedInitials,assignedGoals)
+            % Assuming assignedInitials and assignedGoals are your arrays and are of size 6x3
+            numUAVs = size(assignedInitials, 1);  % Number of UAVs
+            yawAngles = zeros(numUAVs, 1);  % Initialize an array to store the yaw angles
+
+            for i = 1:numUAVs
+                % Calculate the difference in x and y coordinates between goals and initials
+                deltaX = assignedGoals(i, 1) - assignedInitials(i, 1);
+                deltaY = assignedGoals(i, 2) - assignedInitials(i, 2);
+
+                % Calculate the yaw angle
+                yaw = atan2(deltaY, deltaX);  % Yaw angle in radians
+
+                % Store the yaw angle
+                yawAngles(i) = yaw;
+            end
+        end
+
+        function [assignedInitials, assignedGoals] = assignUAVPositions(obj, initialStates, goals)
+            centerPosition = initialStates(1,1:3);
+            % Number of UAVs
+            numUAVs = 7;
+
+            % Add the center position to the goals array to use it as one of the positions
+            allPositions = [goals; centerPosition];
+
+            % Ensure there are 7 unique positions
+            if size(allPositions, 1) ~= numUAVs
+                error('The number of unique positions must be equal to the number of UAVs');
+            end
+
+            % Initialize arrays to store assigned positions
+            assignedInitials = zeros(numUAVs, 3);
+            assignedGoals = zeros(numUAVs, 3);
+
+            % Initialize a flag array to check if a UAV has been assigned
+            assigned = false(numUAVs, 1);
+
+            % Assign initial and goal positions
+            while any(~assigned)
+                shuffledIndices = randperm(numUAVs);
+                for i = 1:numUAVs
+                    if ~assigned(i)
+                        initialIndex = shuffledIndices(i);
+                        goalIndex = shuffledIndices(mod(i, numUAVs) + 1); % Ensures a different index for the goal
+
+                        % Calculate the distance
+                        distance = norm(allPositions(initialIndex, :) - allPositions(goalIndex, :));
+
+                        % Check if the distance is within 1000 meters
+                        if distance <= 1000
+                            % Store the positions
+                            assignedInitials(i, :) = allPositions(initialIndex, :);
+                            assignedGoals(i, :) = allPositions(goalIndex, :);
+                            assigned(i) = true;
+
+                            % Print the assignments
+                            fprintf('UAV %d: Initial Position = [%f, %f, %f], Goal Position = [%f, %f, %f], Distance = %f meters\n', ...
+                                i, assignedInitials(i, 1), assignedInitials(i, 2), assignedInitials(i, 3), ...
+                                assignedGoals(i, 1), assignedGoals(i, 2), assignedGoals(i, 3), distance);
+                        end
+                    end
+                end
+            end
+
+            % Return the assigned initial and goal positions
+            return;
         end
 
         function [positivePeaks, negativePeaks, droneList] = buildPeaks(obj, ownship, droneList, actions)
@@ -150,7 +282,7 @@ classdef Planner < TrajectoryPlanning.Ownship
         function drone = computeIntruderTrajectory(obj, drone, actions)
             % Compute Intruder Trajectory if Traces are Zero
             if drone.Traces == 0
-                drone = forwardSimulate(drone, actions, 0.01, 500);
+                drone = forwardSimulate(drone, actions, drone.timeStep, 500);
             end
         end
 
@@ -173,9 +305,9 @@ classdef Planner < TrajectoryPlanning.Ownship
 
         function [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax] = computeTrajectoryBounds(obj, intruderTraj)
             % Compute Bounds of Intruder Trajectory
-            [Xmin, Xmax] = deal(min(intruderTraj(end, :, 1)), max(intruderTraj(end, :, 1)));
-            [Ymin, Ymax] = deal(min(intruderTraj(end, :, 2)), max(intruderTraj(end, :, 2)));
-            [Zmin, Zmax] = deal(min(intruderTraj(end, :, 3)), max(intruderTraj(end, :, 3)));
+            [Xmin, Xmax] = deal(min(intruderTraj(:, :, 1),[],'all'), max(intruderTraj(:, :, 1),[],'all'));
+            [Ymin, Ymax] = deal(min(intruderTraj(:, :, 2),[],'all'), max(intruderTraj(:, :, 2),[],'all'));
+            [Zmin, Zmax] = deal(min(intruderTraj(:, :, 3),[],'all'), max(intruderTraj(:, :, 3),[],'all'));
         end
 
         function [futureStates, oneStepStates, futureActions] = neighboringStates(obj, ownship, actions)
@@ -197,13 +329,25 @@ classdef Planner < TrajectoryPlanning.Ownship
                 % Handle collision case here if needed
                 % For example: assign zero thrust or modify actions
                 ownship.Traces = 0;
+                % Compute Future Trajectory
+                futureTraj = computeFutureTrajectory(obj,ownship, actions);
+            elseif ownship.Traces == 0
+
+                futureTraj = ownship.Traces;
+
             end
 
-            % Compute Future Trajectory
-            futureTraj = computeFutureTrajectory(obj,ownship, actions);
+            
+            % X = futureTraj(:,1:5:end,1);
+            % Y = futureTraj(:,1:5:end,2);
+            % Z = futureTraj(:,1:5:end,3);
+            % 
+            % plot3(X,Y,Z)
+            
+
 
             % Extract One Step and Future States
-            oneStepStates = futureTraj(10, :, :); % Ensure size assertion as needed
+            oneStepStates = futureTraj(3, :, :); % Ensure size assertion as needed
             futIndex = floor(linspace(1, length(futureTraj(:, 1, 1)), 10));
             futureStates = futureTraj(futIndex, :, :); % Ensure size assertion as needed
 
@@ -278,13 +422,13 @@ classdef Planner < TrajectoryPlanning.Ownship
                 penalityFunc = 5000 - altitude;
                 totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc(belowLevel);
             end
-            if strcmp(obj.experimentName,'withEnergyReward')
+            if obj.energyRewardRate ~= 0
                 % Add battery energy related rewards
                 distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
                 % energyReq = 2067*exp(0.0128*distances);
                 energyReq = predictEnergy(obj,distances);
 
-                energyReward = energyReq.*linspace(0,0.1,size(energyReq,1))'; %change 
+                energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq,1))'; %change energyRewardRate
             else
                 energyReward = 0;
 
@@ -378,7 +522,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                                 continue
                             end
                             % give a 100 meters allowance during initializing
-                            if  norm(ownship.currentStates(1:3) - ownship.traveledPath(1,1:3)) < 200
+                            if  norm(ownship.currentStates(1:3) - ownship.traveledPath(1,1:3)) < 30
                                 continue
                             end
 
