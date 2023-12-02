@@ -1,11 +1,21 @@
-# Chapter-2
-# Urban Air Mobility Decision-Making Framework
+# Pre‑departure Flight Planning and Risk Assessment for UAM/UAS Operations under Battery Constraint
 
-![Project Image](project_image.png) <!-- Add an image illustrating your project-->
+<div align="center">
+    <img src="framework.png" alt="Project Image" width="60%">
+</div>
+
+
 
 ## Overview
 
-The Urban Air Mobility Decision-Making Framework is a comprehensive software solution designed to assess the risk of flight missions in urban air mobility applications. It uses a hierarchical architecture that combines trajectory planning, energy requirement modeling, battery prognostics, and decision-making to determine whether a flight mission should proceed. The framework provides insights into mission feasibility, battery health, and risk assessment.
+This repository contains the implementation of a decision-making framework for Urban Air Mobility (UAM) and Unmanned Aerial Systems (UAS) operations, focusing on enhancing collision safety and battery energy use. The framework features a novel two-layer algorithm: the upper layer performs strategic de-confliction, and the lower layer handles prognostics and decision-making for mission execution.
+
+## Package Delivery Scenario
+The scenario we used to implement the framework and test its performance is designed for a package delivery application and is implemented for the University Park area of the Dallas-Fort Worth metropolitan region. It includes three depots from which aircraft are expected to take off, and random destination places can be assigned within the $7 km^2$ rectangular area.
+
+<div align="center">
+    <img src="PackageDeliveryScenario.jpg" alt="Package Delivery Scenario" width="100%">
+</div>
 
 ## Project Structure
 
@@ -59,15 +69,9 @@ The project is organized into several key components:
 
 ## Contributing
 
-We welcome contributions from the community! If you'd like to contribute to this project, please follow our
+We welcome contributions from the community! If you'd like to contribute to this project, please feel free to do so.
 
-## License
 
-This project is licensed under 
-
-## Contact
-
-For questions or inquiries, please contact
 
 ---
 
