@@ -3,10 +3,14 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from prog_algs.state_estimators import UnscentedKalmanFilter
-from prog_algs.uncertain_data import MultivariateNormalDist
-from prog_algs import predictors
-from prog_algs.metrics import prob_success
+# from prog_algs.state_estimators import UnscentedKalmanFilter
+# from prog_algs.uncertain_data import MultivariateNormalDist
+# from prog_algs import predictors
+# from prog_algs.metrics import prob_success
+from progpy.state_estimators import UnscentedKalmanFilter
+from progpy.uncertain_data import MultivariateNormalDist
+from progpy import predictors
+from progpy.metrics import prob_success
 from battery_electrochem_TarotT18 import BatteryElectroChemEOD as Battery
 
 class BatteryPrognostics:
@@ -104,7 +108,7 @@ class BatteryPrognostics:
         print("\tSOC: ", self.battery.event_state(filter.x.mean)["EOD"])
        
         # Step 2c: Perform state estimation step
-        example_measurements = {"t": 292.2, "v": 25}
+        example_measurements = {"t": 292.2, "v": 25.1}
         
         print("Current of batt = ", self.tarrot_loading(self.sample_time))
         filter.estimate(self.sample_time, self.tarrot_loading(self.sample_time), example_measurements)

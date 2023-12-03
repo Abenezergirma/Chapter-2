@@ -48,6 +48,7 @@ class BatteryExperiment:
         # print(self.data['results'][self.aircraftID][1])
         self.SOC = self.data['results'][self.aircraftID][0]
         self.totalCurrent = self.data['results'][self.aircraftID][1]
+        print(self.totalCurrent)
         self.voltage = self.data['results'][self.aircraftID][2]
         self.actualPosTraj = self.data['results'][self.aircraftID][3]
         self.refPosTraj = self.data['results'][self.aircraftID][4]
@@ -117,7 +118,7 @@ class BatteryExperiment:
 if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.abspath(__file__))  # Get the current directory of the script
     for experiment in range(0,6):
-        results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/packageEnergyRewardrewardRate0.3fullMissionBatteryParams.mat")
+        results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/packageEnergyRewardrewardRate0.5fullMissionBatteryParams.mat")
         pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/prog_results_{}.pkl".format(experiment))
         experiment = BatteryExperiment(results_directory,pickle_path, experiment)
         experiment.run()

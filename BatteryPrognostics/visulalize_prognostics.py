@@ -6,8 +6,8 @@ import collections
 import pandas as pd
 from scipy import stats
 from scipy.stats import norm
-from prog_algs.metrics import prob_success
-from sklearn.preprocessing import normalize 
+from progpy.metrics import prob_success
+# from sklearn.preprocessing import normalize 
 from pathlib import Path
 import sys 
 plt.rcParams['text.usetex'] = True
