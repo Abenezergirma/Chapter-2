@@ -12,7 +12,7 @@ This repository contains the implementation of a decision-making framework for U
 .. image:: images/framework.png
    :alt: alternate text
    :align: center
-   :width: 60%
+   :width: 70%
 
     
     
