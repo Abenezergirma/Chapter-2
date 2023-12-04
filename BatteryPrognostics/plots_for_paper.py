@@ -110,14 +110,15 @@ class PlotsPaper:
                 sigma = np.std(SOC)
 
                 # Generate the bins for the histogram
-                (values, bins, _) = ax.hist(SOC, bins=100, density=True, label=f"Histogram {i+1}", alpha=0.6, color='lightblue', edgecolor='black', linewidth=1.5, range=(0, 1))
+                # (values, bins, _) = ax.hist(SOC, bins=100, density=True, label=f"Histogram {i+1}", alpha=0.6, color='lightblue', edgecolor='black', linewidth=1.5, range=(0, 1))
+                (values, bins, _) = ax.hist(SOC, bins=100, density=True, label=f"Histogram {i+1}", alpha=0.6, color='lightblue', edgecolor='lightblue', linewidth=1.5, range=(0, 1))
 
                 # Generate the PDF
                 bin_centers = 0.5 * (bins[1:] + bins[:-1])
                 pdf = stats.norm.pdf(x=bin_centers, loc=mu, scale=sigma)
 
                 # Plot the PDF within the current subplot
-                ax.plot(bin_centers, pdf, label=f"Gaussian Curve {i+1}", color='green', linestyle='-', linewidth=2, alpha=0.7)
+                ax.plot(bin_centers, pdf, label=f"Gaussian Curve {i+1}", color='green', linestyle='-', linewidth=1.3, alpha=0.7)
 
                 # Append the mean SOC for this profile to the list
                 mean_SOC.append(mu)
@@ -212,6 +213,6 @@ if __name__ == "__main__":
         # results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/fullMissionBatteryParams.mat".format(experiment))
     pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/")
     plotter = PlotsPaper(pickle_path)
-    plotter.plot_soc_predictions_save_independetly()
+    plotter.plot_soc_predictions()
     # plotter.plot_voltage()
     # plotter.get_prog_times()
