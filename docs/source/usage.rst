@@ -6,29 +6,16 @@ Usage
 Installation
 ------------
 
-To use Lumache, first install it using pip:
+1. Clone the repository to your local machine.
+2. Ensure you have the required software dependencies (MATLAB, Python, Simulink, etc.).
+3. Set up the project environment following the guidelines in the project documentation.
 
-.. code-block:: console
-
-   (.venv) $ pip install lumache
-
-Creating recipes
+Guideline 
 ----------------
 
-To retrieve a list of random ingredients,
-you can use the ``lumache.get_random_ingredients()`` function:
-
-.. autofunction:: lumache.get_random_ingredients
-
-The ``kind`` parameter should be either ``"meat"``, ``"fish"``,
-or ``"veggies"``. Otherwise, :py:func:`lumache.get_random_ingredients`
-will raise an exception.
-
-.. autoexception:: lumache.InvalidKindError
-
-For example:
-
->>> import lumache
->>> lumache.get_random_ingredients()
-['shells', 'gorgonzola', 'parsley']
+1. Start by running `main.m` to perform trajectory planning and energy requirement analysis.
+2. Use `generateEnergyRequirement.m` to simulate the UAV and determine energy requirements.
+3. Analyze battery prognostics using the Python library in `Battery Prognostics`.
+4. Develop reward functions using `RewardFunctionExperiments`.
+5. Run the `Main.py` script to make decisions based on risk assessment.
 

@@ -20,9 +20,9 @@ Package Delivery Scenario
 The scenario we used to implement the framework and test its performance is designed for a package delivery application and is implemented for the University Park area of the Dallas-Fort Worth metropolitan region. It includes three depots from which aircraft are expected to take off, and random destination places can be assigned within the $7 km^2$ rectangular area.
 
 .. raw:: html
-<div align="center">
-    <img src="docs/PackageDeliveryScenario.jpg" alt="Package Delivery Scenario" width="100%">
-</div>
+	<div align="center">
+	    <img src="docs/PackageDeliveryScenario.jpg" alt="Package Delivery Scenario" width="100%">
+	</div>
 
 Package Delivery Scenario   
 --------
