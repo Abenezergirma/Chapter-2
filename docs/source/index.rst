@@ -1,15 +1,7 @@
 Pre‑departure Flight Planning and Risk Assessment for UAM/UAS Operations under Battery Constraint
 ===================================
-Contents
---------
 
-.. toctree::
-   scenario
-   results
-   usage
    
-
-
 Overview
 --------
 
@@ -23,10 +15,20 @@ The goal of this project is to develop a decision-making framework for Urban Air
 
     
     
+Check out the following sections for further infromation about the project, including the implemented :doc:`scenario`, :doc:`results` from the experiments, and :doc:`usage` for :ref:`installation` of the project.
 
-Check out the :doc:`usage` section for further information, including
-how to :ref:`installation` the project.
 
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 2
+   index
+   scenario
+   results
+   usage
+
+For the full implementation of this project, please visit our `GitHub repository <https://github.com/Abenezergirma/Chapter-2>`_.
 .. note::
 
    This project is under active development.

@@ -8,7 +8,8 @@ Installation
 
 1. Clone the repository to your local machine using the follwing command:
 
-.. code-block:: bash
+.. code-block::
+
     git clone https://github.com/Abenezergirma/Chapter-2.git
 
 
