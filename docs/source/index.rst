@@ -13,13 +13,11 @@ The goal of this project is to develop a decision-making framework for Urban Air
    :align: center
    :width: 70%
 
-    
-    
-Check out the following sections for further infromation about the project, including the implemented :doc:`scenario`, :doc:`results` from the experiments, and :doc:`usage` for :ref:`installation` of the project.
-
 
 Contents
 --------
+    
+Check out the following sections for further infromation about the project, including the implemented :doc:`scenario`, :doc:`results` from the experiments, and :doc:`usage` for :ref:`installation` of the project.
 
 .. toctree::
    :maxdepth: 2
@@ -30,6 +28,7 @@ Contents
    usage
 
 For the full implementation of this project, please visit our `GitHub repository <https://github.com/Abenezergirma/Chapter-2>`_.
+
 .. note::
 
    This project is under active development.

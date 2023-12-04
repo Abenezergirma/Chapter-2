@@ -6,5 +6,6 @@ The scenario we used to implement the framework and test its performance is desi
    :alt: alternate text
    :align: center
 
+
 In the above figure, the red rectangle depicts the rectangular area considered within the DFW region for the package delivery scenario. Additionally, the strategically de-conflicted trajectories for each aircraft, from their assigned depots to their destinations, are plotted in various colors. These trajectories are generated using the upper layer of the framework. 
 
