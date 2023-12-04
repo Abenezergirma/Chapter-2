@@ -34,6 +34,12 @@ how to :ref:`installation` the project.
 .. note::
 
    This project is under active development.
+   
+Results
+--------
+.. image:: images/SoC_results.png
+   :alt: alternate text
+   :align: center
 
 Contents
 --------
