@@ -5,4 +5,4 @@ This repository contains the implementation of a decision-making framework for U
 
 Read the full documentation here:
 
-https://chapter-2.readthedocs.io/en/latest/index.html#
+https://chapter-2.readthedocs.io
