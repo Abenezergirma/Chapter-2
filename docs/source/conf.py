@@ -5,6 +5,7 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os 
 
 project = 'Chapter-2'
 copyright = '2023, Abenezer Taye'
@@ -21,7 +22,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # Extension for auto-api documentation
 extensions.append('autoapi.extension')
 autoapi_type = 'python'
-autoapi_dirs = ['../Chapter-2']
+# Go up two directories to the Chapter-2 folder
+autoapi_dirs = [os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))]
 
 # Extension for adding notebooks (and markdown) to the documentation:
 extensions.append('myst_nb')
