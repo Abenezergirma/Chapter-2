@@ -20,10 +20,10 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # Extension for auto-api documentation
-extensions.append('autoapi.extension')
-autoapi_type = 'python'
+#extensions.append('autoapi.extension')
+#autoapi_type = 'python'
 # Go up two directories to the Chapter-2 folder
-autoapi_dirs = [os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))]
+#autoapi_dirs = [os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))]
 
 # Extension for adding notebooks (and markdown) to the documentation:
 extensions.append('myst_nb')
