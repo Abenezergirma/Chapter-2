@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os 
+import sphinx_rtd_theme
 
 project = 'Chapter-2'
 copyright = '2023, Abenezer Taye'
@@ -49,8 +50,10 @@ nb_execution_timeout = 180
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+#html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_logo = '_static/chapter2_icon.png'
 html_theme_options = {
     'github_user': 'abenezergirma',
     'github_repo': 'Chapter-2',
@@ -58,7 +61,6 @@ html_theme_options = {
     'github_button': True,
     'github_type': 'star',
     'fixed_sidebar': True,
-    'logo': 'images/chapter2_icon.png',
     'description': 'Pre‑departure Flight Planning and Risk Assessment under Battery Constraint',
     'logo_name': True
 }
