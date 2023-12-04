@@ -21,19 +21,19 @@ Project Guideline
 Follow these steps to effectively utilize the project:
 
 1. **Trajectory Planning and Energy Analysis**:
-   Start the project by executing :code:`main.m`. This script is responsible for performing trajectory planning and analyzing the energy requirements of the UAV.
+   Start the project by executing :code:`main.m`. This script is responsible for performing trajectory planning and analyzing the energy requirements of each aircraft.
 
 2. **Energy Requirement Simulation**:
-   Use :code:`generateEnergyRequirement.m` to simulate the UAV's operation and determine its energy needs. This step is crucial for understanding the power consumption patterns under various conditions.
+   Use :code:`generateEnergyRequirement.m` to simulate the aircraft's operation and determine its energy requirements. This step is crucial for understanding the power consumption patterns under various conditions.
 
 3. **Battery Prognostics Analysis**:
-   Dive into battery health and future performance predictions by utilizing the Python library found in the :code:`Battery Prognostics` folder. This analysis helps in assessing the longevity and efficiency of the UAV's battery.
+   Dive into battery state of charge (SoC) predictions by utilizing the Python library found in the :code:`Battery Prognostics` folder. This analysis helps in assessing the longevity and efficiency of the UAV's battery.
 
 4. **Development of Reward Functions**:
-   Visit :code:`RewardFunctionExperiments` to develop and experiment with various reward functions. These functions are essential for evaluating different operational strategies based on their outcomes.
+   Go to :code:`RewardFunctionExperiments` to develop and experiment with various reward functions. These functions are essential for evaluating different operational strategies based on their outcomes.
 
 5. **Decision Making Based on Risk Assessment**:
-   Finally, execute :code:`Main.py` to apply the decision-making algorithms. This script integrates the risk assessment and makes informed decisions to optimize UAV operations.
+   Finally, execute :code: `decision_maker.py`to apply the decision-making regarding whether to execute the flight or not. This script integrates the risk assessment and makes informed decisions to optimize UAV operations.
 
 For more detailed information on each step, refer to the corresponding sections in the documentation.
 

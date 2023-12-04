@@ -25,3 +25,14 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+html_theme_options = {
+    'github_user': 'abenezergirma',
+    'github_repo': 'Chapter-2',
+    'github_banner': True,
+    'github_button': True,
+    'github_type': 'star',
+    'fixed_sidebar': True,
+    'logo': 'images/chapter2_icon.png',
+    'description': 'Pre‑departure Flight Planning and Risk Assessment under Battery Constraint',
+    'logo_name': True
+}
