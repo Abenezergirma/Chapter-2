@@ -30,8 +30,26 @@ The scenario we used to implement the framework and test its performance is desi
    :alt: alternate text
    :align: center
 
-Package Delivery Scenario   
+   
+Results
 --------
+.. table::
+   :align: center
+
+   +----------------------------------------+----------------------------------------+
+   | .. image:: images/SOC_1.png            | .. image:: images/SOC_2.png            |
+   |    :alt: alternative text 1            |    :alt: alternative text 2            |
+   |    :align: center                      |    :align: center                      |
+   +----------------------------------------+----------------------------------------+
+   | .. image:: images/SOC_3.png            | .. image:: images/SOC_4.png            |
+   |    :alt: alternative text 3            |    :alt: alternative text 4            |
+   |    :align: center                      |    :align: center                      |
+   +----------------------------------------+----------------------------------------+
+   | .. image:: images/SOC_5.png            | .. image:: images/SOC_6.png            |
+   |    :alt: alternative text 5            |    :alt: alternative text 6            |
+   |    :align: center                      |    :align: center                      |
+   +----------------------------------------+----------------------------------------+
+
 
 
 Check out the :doc:`usage` section for further information, including
@@ -40,11 +58,4 @@ how to :ref:`installation` the project.
 .. note::
 
    This project is under active development.
-   
-Results
---------
-.. image:: images/SoC_results.png
-   :alt: alternate text
-   :align: center
-
 

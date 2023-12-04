@@ -172,8 +172,8 @@ class PlotsPaper:
             ax.text(0.05, 0.9, f"Mean SOC: {mean_experiment_SOC:.3f}", transform=ax.transAxes, fontsize=10, color='blue')  # Smaller font size
 
             plt.tight_layout()
-            filename = f'Battery_SOC_Prediction_Aircraft_{i+1}.eps'
-            plt.savefig(os.path.join(self.current_directory, filename), format='eps')
+            filename = f'Battery_SOC_Prediction_Aircraft_{i+1}.png'
+            plt.savefig(os.path.join(self.current_directory, filename), format='png')
             plt.close(fig)
         
     def plot_voltage(self):
@@ -213,6 +213,6 @@ if __name__ == "__main__":
         # results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/fullMissionBatteryParams.mat".format(experiment))
     pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/")
     plotter = PlotsPaper(pickle_path)
-    plotter.plot_soc_predictions()
+    plotter.plot_soc_predictions_save_independetly()
     # plotter.plot_voltage()
     # plotter.get_prog_times()
