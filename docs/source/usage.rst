@@ -18,7 +18,7 @@ Installation
 
 The project is developed using MATLAB, Simulink, and Python codes. The following image shows the architecture of the MATLAB code that implements the trajectory planner (upper layer) part of the framework. 
 
-.. image:: images/DependencyGraph.png
+.. image:: images/code_architecture.png
    :alt: alternate text
    :align: center
    
