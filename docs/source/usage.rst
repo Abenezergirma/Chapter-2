@@ -16,10 +16,62 @@ Installation
 2. Ensure you have the required softwares installed with their dependancies (MATLAB, Python, Simulink, etc.).
 3. Set up the project environment following the guidelines in the project documentation.
 
-Project Guideline
+The project is developed using MATLAB, Simulink, and Python codes. The following image shows the architecture of the MATLAB code that implements the trajectory planner (upper layer) part of the framework. 
+
+.. image:: images/DependencyGraph.png
+   :alt: alternate text
+   :align: center
+   
+
+Project Structure
 -----------------
 
-Follow these steps to effectively utilize the project:
+The project is organized into several key components:
+
+Trajectory Planner
+------------------
+
+- **Ownship.m**: A MATLAB class responsible for guidance modeling.
+- **Planner.m**: A MATLAB class handling trajectory planning algorithms.
+- **Trajectory Planning Results**: Contains saved data and figures.
+- **planTrajectories.m**: MATLAB script to execute trajectory planning and save results.
+- **VisualizeTrajectory.m**: A class for plotting trajectory planning data.
+
+Energy Requirement
+------------------
+
+- **UAV Simulink model**: Contains the Simulink model of the UAV.
+- **SimulinkUAVWrapper.m**: A MATLAB class acting as a wrapper for the Simulink model.
+- **Energy Requirement Results**: Holds saved power-related parameters.
+- **generateEnergyRequirement.m**: MATLAB script to simulate the UAV model and generate energy requirement data.
+
+Battery Prognostics
+-------------------
+
+- **BatteryPrognosticsLibrary.py**: A Python class containing a prognostics library.
+- **Battery_electrochemistry_model.py**: Python script with the battery model.
+- **Battery Prognostics Results**: Stores battery prognostics-related results.
+- **Visualize_prognostics.py**: Python class with methods for visualizing battery prognostics results.
+
+Reward Function Experiment
+--------------------------
+
+- **RewardFunctionExperiments.m**: A MATLAB class that constructs experiments for reward function generation, inheriting from Ownship and SimulinkUAVWrapper classes.
+- **Reward Function Experiment Results**: Contains files and figures from reward function experiments.
+- **rewardExperiment.m**: MATLAB script to run reward function experiments and save results.
+
+Decision Maker
+--------------
+
+- **decision maker.py**: The main script that runs the entire system and makes decisions based on the risk assessment.
+
+   
+
+Implementation Guideline
+-----------------
+
+Follow these steps to successfully implement the project:
+
 
 1. **Trajectory Planning and Energy Analysis**:
    Start the project by executing :code:`main.m`. This script is responsible for performing trajectory planning and analyzing the energy requirements of each aircraft.
