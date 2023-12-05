@@ -8,7 +8,7 @@
 import os 
 import sphinx_rtd_theme
 
-project = 'Chapter-2'
+project = 'Flight Planning and Risk Assessment'
 copyright = '2023, Abenezer Taye'
 author = 'Abenezer Taye'
 
