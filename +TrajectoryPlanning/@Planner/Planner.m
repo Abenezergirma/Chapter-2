@@ -94,9 +94,9 @@ classdef Planner < TrajectoryPlanning.Ownship
     end
 
     methods
-        function obj = Planner(scenario, totalAgents, totalNMACs, experimentName)
+        function obj = Planner(scenario, totalAgents, totalNMACs, experimentName,windDataPath,center_lon,center_lat)
             % Initialize the planner with scenario, total agents, and NMACs
-            obj@TrajectoryPlanning.Ownship();
+            obj@TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
             obj.scenario = scenario;
             obj.totalAgents = totalAgents;
             obj.totalNMACs = totalNMACs;

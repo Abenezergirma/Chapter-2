@@ -6,8 +6,8 @@ energyRewardRate = [0,0.3];% [0,0.1,0.2,0.3,0.4,0.5];
 
 for k = 2:length(energyRewardRate)
     fullName = strcat(experimentName,'rewardRate',num2str(energyRewardRate(k)));
-    % TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
-    EnergyRequirement.generateEnergyRequirement(fullName)
+    TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
+    % EnergyRequirement.generateEnergyRequirement(fullName)
 end
 
 resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';

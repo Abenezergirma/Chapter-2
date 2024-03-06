@@ -7,7 +7,11 @@ resultsPath = 'TrajectoryPlanningResults';
 totalAgents = 6;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
+center_lon = -96.94;
+center_lat = 33.06;
+windDataPath = 'Wind Forecasts/smaller_area_wind_data.json';
+planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,...
+    experimentName, windDataPath,center_lon,center_lat);
 planner.energyRewardRate = energyRewardRate;
 %% Generate Initial States and Goals
 % [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
@@ -55,7 +59,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
 
 %% Supporting Functions
     function drone = initializeDrone(id, initState, goal)
-        drone = TrajectoryPlanning.Ownship();
+        drone = TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
         drone.aircraftID = id;
         drone.goal = goal;
         drone = updateAircraftStates(drone, initState);
