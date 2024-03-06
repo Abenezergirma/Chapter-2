@@ -336,8 +336,7 @@ classdef Planner < TrajectoryPlanning.Ownship
             end
 
             % save('futureTraj.mat','futureTraj')
-
-            
+            % 
             % X = futureTraj(:,1:2:end,1);
             % Y = futureTraj(:,1:2:end,2);
             % Z = futureTraj(:,1:2:end,3);

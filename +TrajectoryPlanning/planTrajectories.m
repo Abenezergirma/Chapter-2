@@ -4,7 +4,7 @@ function plotTrajectories(experimentName,energyRewardRate)
 
 %% Initialization
 resultsPath = 'TrajectoryPlanningResults';
-totalAgents = 6;
+totalAgents = 2;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
 center_lon = -96.94;
@@ -20,8 +20,8 @@ planner.energyRewardRate = energyRewardRate;
 [assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
 yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
 
-initialStates = [assignedInitials,zeros(totalAgents,9)];
-initialStates(:,9) = yawAngles;
+initialStates = [assignedInitials(1:totalAgents,:),zeros(totalAgents,9)];
+initialStates(:,9) = yawAngles(1:totalAgents,:);
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
     droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));

@@ -182,7 +182,9 @@ classdef Ownship < handle
 
             for i = 1:numSteps
                 % compute drag forces
-                [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z, xDot, yDot, zDot);
+                % [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
+                Dx = 0; Dy = 0; Dz =0; 
+
 
                 % Update the linear speeds [x4 - x6]
                 xDot = xDot + timestep.*((sin(theta).*cos(psi).*cos(phi) + sin(phi).*sin(psi)).*T/mt - Dx/mt);
@@ -413,10 +415,10 @@ classdef Ownship < handle
                 obj = forwardSimulate(obj, control_Actions,obj.timeStep, obj.numSteps);
             end
             traces = obj.Traces(3:end,floor(linspace(1,length(obj.Traces(1,:,1)),DryVR_obj.numTraces)),:);
-            t = 0:0.1:50-0.3;
+            t = 0:obj.timeStep:(obj.numSteps-3)*obj.timeStep;
 
-            traces(:,:,8) = repmat(t,1,1,DryVR_obj.numTraces); %DO this before the simulation
-            traces = permute(traces(:,:,[8,1:7]), [2,1,3]);
+            traces(:,:,end+1) = repmat(t,1,1,DryVR_obj.numTraces); %DO this before the simulation
+            traces = permute(traces(:,:,[end,1:end-1]), [2,1,3]);
             initialRadii = computeInitialRadii(DryVR_obj,traces);
             discrepancyParameters = computeDiscrepancyParameters(DryVR_obj, traces, initialRadii);
             reachTube = getReachtube(DryVR_obj, traces, initialRadii, discrepancyParameters);
