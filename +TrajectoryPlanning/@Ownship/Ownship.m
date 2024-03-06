@@ -29,8 +29,8 @@ classdef Ownship < handle
     properties (Access = public)
         % general Aircraft properties
         g = 9.81
-        timeStep = 0.001;
-        numSteps = 1000;
+        timeStep = 0.1;
+        numSteps = 500;
         aircraftActions;
 
         % Aircraft states
@@ -82,9 +82,9 @@ classdef Ownship < handle
 
     methods(Static)
         function dydt =  continiousOctocopterModel(t,y,actions)
-            Ixx = 12;
-            Iyy = 12;
-            Izz = 12; % 
+            Ixx = 0.2506;
+            Iyy = 0.2506;
+            Izz = 0.4538; % 
             l = 1; % arm length
             mt = 15; % total mass of the UAV
             g = 9.81;
@@ -111,6 +111,80 @@ classdef Ownship < handle
             rRate = ((Ixx - Iyy)/Izz).*q.*r + (l/Izz).*tauPsi;
             dydt = [xRate; yRate; zRate; xDRate; yDRate; zDRate; phiRate;thetaRate;psiRate;pRate;qRate;rRate ];
         end
+
+        function [Dx, Dy, Dz] = dragForces(x,y,z, Vx, Vy, Vz)
+            Cd = 1.2; % drag coefficient
+            Ai = 8; % apparent face of the vehicle
+            rho = 1.223; % air density
+
+        end
+
+        function futureTraj = OctocopterModelWind(ownship, actions, timestep, numSteps)
+            % A function that returns a set of next states with state constraints
+            % and wind effect applied
+            % This model assumes the wind acceleration is zero (wx_dot,wy_dot,wz_dot = 0)
+            Ixx = 0.2506;
+            Iyy = 0.2506;
+            Izz = 0.4538; % 
+            l = 0.635; % arm length
+            mt = 2.66; % total mass of the UAV
+            g = 9.81;
+
+            % Extract state variables
+            currentState = ownship.currentStates;
+     
+            [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r] = deal(currentState(:,1), ...
+                currentState(:,2),currentState(:,3),currentState(:,4),currentState(:,5), ...
+                currentState(:,6),currentState(:,7),currentState(:,8),currentState(:,9), ...
+                currentState(:,10),currentState(:,11),currentState(:,12));
+
+            % Extract control variables
+            [T, tauTheta, tauPhi, tauPsi] = deal(actions(:,1), actions(:,2), actions(:,3), actions(:,4));
+            
+            % Preallocate memory for speed
+            futureTraj = zeros(numSteps, length(actions(:,1)), length(currentState(1,:))); %Preallocated memory for speed
+
+            for i = 1:numSteps
+                % Update the linear speeds [x4 - x6]
+                xDot = xDot + timestep.*(sin(theta).*cos(psi).*cos(phi) + sin(phi).*sin(psi)).*T/mt;
+                xDot = min( max(xDot, -10), 10);
+                yDot = yDot + timestep.*(sin(theta).*sin(psi).*cos(phi) - sin(phi).*sin(psi)).*T/mt;
+                yDot = min( max(yDot, -10), 10);
+                zDot = zDot + timestep.*(-g + (cos(psi).*cos(theta)).*T/mt);
+                zDot = min( max(zDot, -5), 5);
+
+                % Update the linear positions [x1 - x3]
+                x = x + xDot.*timestep;
+                y = y + yDot.*timestep;
+                z = z + zDot.*timestep;
+
+                % Update the angular speeds [x10 - x12]
+                p = p + timestep.*(((Iyy - Izz)/Ixx).*q.*r + (l/Ixx).*tauPhi);
+                p =   min( max(p, deg2rad(-100)), deg2rad(100)); 
+
+                q = q + timestep.*(((Izz - Ixx)/Iyy).*p.*r + (l/Iyy).*tauTheta);
+                q =  min( max(q, deg2rad(-100)), deg2rad(100));  
+
+                r = r + timestep.*(((Ixx - Iyy)/Izz).*q.*r + (l/Izz).*tauPsi);
+                r =  min( max(r, deg2rad(-200)), deg2rad(200)); 
+                
+               % Update the angular pos [x7 - x9]
+                phi = phi + timestep.*(p + q.*sin(phi).*tan(theta+0.1) + r.*cos(phi).*tan(theta+0.1));
+                phi =min( max(phi, deg2rad(-45)), deg2rad(45));%wrapTo2Pi(phi);% 
+
+                theta = theta + timestep.*(q.*cos(phi) - r.*sin(phi));
+                theta = min( max(theta, deg2rad(-45)), deg2rad(45));
+
+                psi = psi + timestep.*(q.*(sin(phi)./cos(theta)) + r.*(cos(phi)./cos(theta)));
+                psi = wrapTo2Pi(psi);% min( max(psi, -pi), pi); 
+
+                nextState = [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r];
+
+                % Store the states into an array
+                futureTraj(i,:,:) = nextState;
+            end
+        end
+
 
         function futureTraj = discreteOctocopterModel(ownship, actions, timestep, numSteps)
             % A function that returns a set of next states with state constraints
@@ -276,7 +350,6 @@ classdef Ownship < handle
                     control_Actions = unique(actions, 'rows');
                 else
                     control_Actions = obj.aircraftActions;
-                
                 end
                 obj = forwardSimulate(obj, control_Actions,obj.timeStep, obj.numSteps);
             end

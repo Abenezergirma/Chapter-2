@@ -91,9 +91,6 @@ classdef Planner < TrajectoryPlanning.Ownship
                     error('scenario building on progress')
             end
         end
-
-
-
     end
 
     methods
@@ -282,7 +279,7 @@ classdef Planner < TrajectoryPlanning.Ownship
         function drone = computeIntruderTrajectory(obj, drone, actions)
             % Compute Intruder Trajectory if Traces are Zero
             if drone.Traces == 0
-                drone = forwardSimulate(drone, actions, drone.timeStep, 500);
+                drone = forwardSimulate(drone, actions, drone.timeStep, drone.numSteps);
             end
         end
 
@@ -330,24 +327,25 @@ classdef Planner < TrajectoryPlanning.Ownship
                 % For example: assign zero thrust or modify actions
                 ownship.Traces = 0;
                 % Compute Future Trajectory
-                futureTraj = computeFutureTrajectory(obj,ownship, actions);
+                futureTraj = computeFutureTrajectory(obj,ownship, actions);        
             elseif ownship.Traces == 0
-
+                % Compute Future Trajectory
+                futureTraj = computeFutureTrajectory(obj,ownship, actions);
+            else
                 futureTraj = ownship.Traces;
-
             end
 
             
-            % X = futureTraj(:,1:5:end,1);
-            % Y = futureTraj(:,1:5:end,2);
-            % Z = futureTraj(:,1:5:end,3);
-            % 
-            % plot3(X,Y,Z)
+            X = futureTraj(:,1:2:end,1);
+            Y = futureTraj(:,1:2:end,2);
+            Z = futureTraj(:,1:2:end,3);
+
+            plot3(X,Y,Z)
             
 
 
             % Extract One Step and Future States
-            oneStepStates = futureTraj(3, :, :); % Ensure size assertion as needed
+            oneStepStates = futureTraj(100, :, :); % Ensure size assertion as needed
             futIndex = floor(linspace(1, length(futureTraj(:, 1, 1)), 10));
             futureStates = futureTraj(futIndex, :, :); % Ensure size assertion as needed
 
@@ -480,7 +478,7 @@ classdef Planner < TrajectoryPlanning.Ownship
 
         end
 
-        function [terminal, NMACs, droneList] = terminalDetection(obj,droneList)
+        function [terminal, NMACs, droneList] = terminalDetection(obj,droneList,stepCounter)
             NMACs = 0;
             NMACsPair = zeros(numel(droneList),numel(droneList));
             for own = 1:numel(droneList)
@@ -522,7 +520,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                                 continue
                             end
                             % give a 100 meters allowance during initializing
-                            if  norm(ownship.currentStates(1:3) - ownship.traveledPath(1,1:3)) < 30
+                            if  stepCounter < 50
                                 continue
                             end
 

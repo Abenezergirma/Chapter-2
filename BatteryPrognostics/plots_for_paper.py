@@ -94,7 +94,7 @@ class PlotsPaper:
         
         plt.subplots_adjust(bottom=0.15)
         plt.rcParams["figure.figsize"] = (6, 8)  # Adjust figure size for multiple subplots
-        plt.grid()
+        # plt.grid()
 
         for i, profile_dict in enumerate(self.soc_python):
             ax = plt.subplot(num_rows, num_cols, i + 1)  # Create a new subplot for each experiment
@@ -185,7 +185,7 @@ class PlotsPaper:
 
         plt.subplots_adjust(bottom=0.2)
         plt.rcParams["figure.figsize"] = (12, 8)  # Adjust figure size for multiple subplots
-        plt.grid()
+        # plt.grid()
 
         for i, voltage_dict in enumerate(self.voltage_python):
             plt.subplot(num_rows, num_cols, i + 1)  # Create a new subplot for each experiment
@@ -213,6 +213,6 @@ if __name__ == "__main__":
         # results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/fullMissionBatteryParams.mat".format(experiment))
     pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/")
     plotter = PlotsPaper(pickle_path)
-    plotter.plot_soc_predictions_save_independetly()
-    # plotter.plot_voltage()
-    # plotter.get_prog_times()
+    # plotter.plot_soc_predictions_save_independetly()
+    # plotter.plot_soc_predictions()
+    plotter.plot_voltage()

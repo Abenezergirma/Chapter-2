@@ -20,7 +20,8 @@ rewardExpts.energyRequirement = 'reqEnergy.mat';
 sampleWaypoints = setWaypoints;%(:,1:20:10000,:);
 trajID = 1:2:100;
 
-% rewardExpts.plotAllTrajectoryAndWaypoints(trajectories(:,trajID,1:3),setWaypoints(:,trajID,:))
+load("futureTraj.mat")
+% rewardExpts.plotAllTrajectoryAndWaypoints(trajectories(:,:,1:3),setWaypoints(:,:,:))
 % 
 % 
 % plot3(trajectories(:,trajID,1),trajectories(:,trajID,2),trajectories(:,trajID,3) )

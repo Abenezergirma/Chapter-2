@@ -1,9 +1,24 @@
 import os
 import xml.etree.ElementTree as ET
+import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from mpl_toolkits.basemap import Basemap
-import folium
+# from mpl_toolkits.basemap import Basemap
+# import folium
+import matplotlib.animation as animation
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
+import numpy as np
+import geopandas as gpd
+import pandas as pd
+from shapely.geometry import Point, LineString
+import contextily as ctx
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+
+plt.rcParams['text.usetex'] = True
 
 
 
@@ -119,6 +134,128 @@ class UAVTrajectoryAnimator:
         ani = FuncAnimation(fig, animate, init_func=init, frames=max(len(t) for t in self.trajectories), blit=True)
         plt.show()
         
+    def plot_trajectories_with_geopandas(self):
+        """Plot the trajectories using Geopandas."""
+        fig, ax = plt.subplots()
+
+        # Convert trajectories to a GeoDataFrame
+        gdf_list = []
+        for i, trajectory in enumerate(self.trajectories):
+            # Create a DataFrame for each trajectory
+            df = pd.DataFrame(trajectory, columns=['lon', 'lat'])
+            df['UAV'] = f'UAV {i+1}'
+            
+            # Convert DataFrame to GeoDataFrame
+            gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
+            gdf_list.append(gdf)
+
+        # Combine all GeoDataFrames
+        all_trajectories_gdf = pd.concat(gdf_list)
+            # Set the CRS for GeoDataFrame to WGS84 (EPSG:4326)
+        all_trajectories_gdf.set_crs(epsg=4326, inplace=True)
+
+        # Reproject to Web Mercator for contextily basemap
+        all_trajectories_gdf = all_trajectories_gdf.to_crs(epsg=3857)
+
+        # Plot using Geopandas
+        # all_trajectories_gdf.plot(ax=ax, column='UAV', legend=True, marker='o')
+            # Set attractive colors for the trajectories
+        colors = ['red', 'green', 'blue', 'purple', 'orange', 'cyan', 'magenta']
+
+        # Plot each trajectory with a thinner line and different color
+        for i, (label, df) in enumerate(all_trajectories_gdf.groupby('UAV')):
+            df.plot(ax=ax, color='blue', legend=True, linewidth=1.0, marker='o', markersize=1.5)
+
+        
+        # Add Basemap using a different tile provider
+        # ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        print(ctx.providers.HEREv3.keys())
+        
+        # ctx.add_basemap(ax, source=ctx.providers.HEREv3.normalDay)
+        # Example of how to update the tile provider with your token
+        ctx.providers.HEREv3.normalDayCustom.build_url = lambda x, y, z: f"https://1.base.maps.ls.hereapi.com/maptile/2.1/maptile/newest/normal.day/{z}/{x}/{y}/256/png?apiKey=JOwwg7YVdrxTLyd49k85cQ"
+
+
+        plt.xlabel('Longitude')
+        plt.ylabel('Latitude')
+        plt.title('UAV Trajectories')
+        plt.savefig('UAV_traj.png', dpi=300, bbox_inches='tight')
+        plt.show()
+
+    def animate_trajectories_with_quadrotor(self):
+        """Animate UAV trajectories with quadrotor icons and save the recording."""
+        # fig, ax = plt.subplots()
+        fig, ax = plt.subplots(subplot_kw={'projection': ccrs.PlateCarree()})
+
+
+        # Convert trajectories to a GeoDataFrame
+        gdf_list = []
+        for i, trajectory in enumerate(self.trajectories):
+            df = pd.DataFrame(trajectory, columns=['lon', 'lat'])
+            df['UAV'] = f'UAV {i+1}'
+            gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat))
+            gdf_list.append(gdf)
+        
+        # Combine all GeoDataFrames
+        all_trajectories_gdf = pd.concat(gdf_list)
+        all_trajectories_gdf.set_crs(epsg=4326, inplace=True)
+        all_trajectories_gdf = all_trajectories_gdf.to_crs(epsg=3857)
+
+        # Add Basemap
+        # ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        # Set a default zoom level
+        default_zoom = 15  # Adjust this based on your data's extent
+
+        # Add Basemap with a fixed zoom level
+        ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
+        
+        # Add geographical features
+        ax.add_feature(cfeature.COASTLINE)
+        ax.add_feature(cfeature.BORDERS, linestyle=':')
+
+
+        # Function to create a quadrotor icon
+        def create_quadrotor_icon():
+            verts = [(0.0, -0.1), (0.0, 0.1), (0.1, 0.2), (0.1, -0.2), (0.0, -0.1)]
+            codes = [Path.MOVETO, Path.LINETO, Path.LINETO, Path.LINETO, Path.CLOSEPOLY]
+            path = Path(verts, codes)
+            patch = PathPatch(path, facecolor='black', lw=2)
+            return patch
+
+        # Initialize quadrotor icons for each UAV
+        quadrotors = [create_quadrotor_icon() for _ in self.trajectories]
+        for quadrotor in quadrotors:
+            ax.add_patch(quadrotor)
+        
+        def move_quadrotor(patch, new_position):
+        # Get the current vertices of the patch
+            vertices = patch.get_path().vertices
+            # Calculate the offset
+            offset = new_position - vertices.mean(axis=0)
+            # Update the vertices
+            vertices += offset
+
+        
+        # Set the geographic extent of the plot
+        # ax.set_extent([min_lon, max_lon, min_lat, max_lat], crs=ccrs.PlateCarree())
+        def update(frame):
+            for i, trajectory in enumerate(self.trajectories):
+                if frame < len(trajectory):
+                    lon, lat = trajectory[frame]
+                    # Convert the lon/lat to the axes coordinate system
+                    x, y = ax.projection.transform_point(lon, lat, src_crs=ccrs.Geodetic())
+                    # Move the quadrotor icon
+                    move_quadrotor(quadrotors[i], np.array([x, y]))
+            return quadrotors
+
+        fig.canvas.draw()
+        ani = FuncAnimation(fig, update, frames=max(len(t) for t in self.trajectories), blit=False)
+
+        # Save the animation
+        ani.save('uav_trajectories_animation.mp4', writer='ffmpeg', fps=30)
+        plt.show()    
+        
+            
     def generate_folium_map_with_trajectories(self, depots, destinations, rectangle_corners, map_center, zoom_start=13):
         """Generate a Folium map with depots, destinations, and UAV trajectories."""
         # Initialize the map
@@ -199,6 +336,8 @@ trajectory_directory = os.path.join(current_directory, "..", "TrajectoryPlanning
 animator = UAVTrajectoryAnimator(trajectory_directory)
 animator.load_data()
 animator.sample_trajectories(step=100)
+# animator.animate_trajectories_with_quadrotor()
+animator.plot_trajectories_with_geopandas()
 
 map_image_path = 'background_map.png'
 map_extent = [-96.817287, -96.788959, 32.851601, 32.875395]  # Replace with actual bounds
@@ -210,7 +349,7 @@ Destinations = [[32.864085567567571, -96.806916269255453], [32.862029441441443, 
 rectangle_corners = [(32.875395, -96.788959), (32.875395, -96.817287), (32.851601, -96.817287), (32.851601, -96.788959)]
 
 # Create and save the Folium map
-folium_map = animator.generate_folium_map_with_trajectories(Depots, Destinations, rectangle_corners, map_center=[32.863498, -96.803123], zoom_start=13)
+# folium_map = animator.generate_folium_map_with_trajectories(Depots, Destinations, rectangle_corners, map_center=[32.863498, -96.803123], zoom_start=13)
 
 # animator.plot_trajectories_on_map()
 # animator.animate()

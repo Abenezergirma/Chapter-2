@@ -91,9 +91,6 @@ classdef Planner < TrajectoryPlanning.Ownship
                     error('scenario building on progress')
             end
         end
-
-
-
     end
 
     methods
@@ -338,17 +335,23 @@ classdef Planner < TrajectoryPlanning.Ownship
                 futureTraj = ownship.Traces;
             end
 
+            % save('futureTraj.mat','futureTraj')
+
             
-            % X = futureTraj(:,1:5:end,1);
-            % Y = futureTraj(:,1:5:end,2);
-            % Z = futureTraj(:,1:5:end,3);
+            % X = futureTraj(:,1:2:end,1);
+            % Y = futureTraj(:,1:2:end,2);
+            % Z = futureTraj(:,1:2:end,3);
             % 
             % plot3(X,Y,Z)
-            
 
+            if obj.energyRewardRate == 0
+                nextStep = 10;
+            else
+                nextStep = 100;
+            end
 
             % Extract One Step and Future States
-            oneStepStates = futureTraj(100, :, :); % Ensure size assertion as needed
+            oneStepStates = futureTraj(nextStep, :, :); % Change this to 100 for optimal performance 
             futIndex = floor(linspace(1, length(futureTraj(:, 1, 1)), 10));
             futureStates = futureTraj(futIndex, :, :); % Ensure size assertion as needed
 

@@ -136,6 +136,64 @@ classdef SimulinkUAVWrapper
             end
         end
 
+function plotTrajectoriesAndWaypoints(obj, trajectory1, waypoints1, trajectory2, waypoints2)
+    % Set up figure
+    figure;
+    hold on;
+    xlabel('X');
+    ylabel('Y');
+    zlabel('Z');
+    title('Trajectories and Waypoints');
+    grid on;
+
+    % Initialize legend information
+    h = []; % Handles for the plots
+    labels = {}; % Labels for the plots
+
+    % Function to plot each trajectory and waypoints
+    function plotSet(trajectory, waypoints, trajColor, wpColor, label)
+        uav = 6;
+        x_traj = trajectory(:, uav,1);
+        y_traj = trajectory(:, uav,2);
+        z_traj = trajectory(:, uav,3)-950;
+
+        x_waypoints = waypoints(:, uav,1);
+        y_waypoints = waypoints(:, uav,2);
+        z_waypoints = waypoints(:, uav, 3)-950;
+
+        % Plot the trajectory
+        h_traj = plot3(x_traj, y_traj, z_traj, trajColor, 'LineWidth', 1.5);
+        % Plot the waypoints
+        scatter3(x_waypoints, y_waypoints, z_waypoints, 100, wpColor, 'filled');
+
+        % Collect the handles and labels for legend
+        h(end+1) = h_traj;
+        labels{end+1} = label;
+    end
+
+    % Plot the first trajectory and waypoints with label for "Traj without reward"
+    plotSet(trajectory1, waypoints1, 'b-', 'ro', 'Traj without reward');
+
+    % Plot the second trajectory and waypoints with label for "Traj with reward"
+    plotSet(trajectory2, waypoints2, 'g-', 'mo', 'Traj with reward');
+
+    % Add legend
+    legend(h, labels, 'Location', 'best');
+
+    % Adjust view and display the plot
+    view(3);
+    axis equal;
+    hold off;
+
+    % Set the filename for the PNG image
+    filename = fullfile(obj.resultsPath,'trajectoryAndWaypoints.png');
+
+    % Use the print function to save the figure as a PNG image
+    print(filename, '-dpng'); % '-dpng' specifies the format
+end
+
+
+
         function plotTrajectoryAndWaypoints(obj,trajectories, waypoints)
             % Extract x, y, and z coordinates from trajectories and waypoints
             x_traj = trajectories(:, 1);
@@ -154,7 +212,7 @@ classdef SimulinkUAVWrapper
             % Plot the waypoints
             scatter3(x_waypoints, y_waypoints, z_waypoints, 100, 'ro', 'filled');
 
-            
+
             xlabel('X');
             ylabel('Y');
             zlabel('Z');
@@ -181,18 +239,21 @@ classdef SimulinkUAVWrapper
 
             % Subplot for SOC and voltage
             subplot(2, 1, 1);
-            yyaxis left;
-            plot(timeb, SOC*100, 'b', 'LineWidth', 1.5);
-            ylabel('SOC');
-            ylim([0, 100]);
-            yyaxis right;
             plot(timeb, voltage, 'r', 'LineWidth', 1.5);
             ylabel('Voltage');
             xlabel('Time (s)');
-            legend('SOC', 'Voltage', 'Location', 'southwest');
-                % legend('Totali', 'Location', 'Best'); % Adjust legend location
-
-            title('SOC and Voltage');
+            legend('Voltage', 'Location', 'northeast');
+            % yyaxis left;
+            % plot(timeb, SOC*100, 'b', 'LineWidth', 1.5);
+            % ylabel('SOC');
+            % ylim([0, 100]);
+            % yyaxis right;
+            % plot(timeb, voltage, 'r', 'LineWidth', 1.5);
+            % ylabel('Voltage');
+            % xlabel('Time (s)');
+            % legend('SOC', 'Voltage', 'Location', 'southwest');
+            % legend('Totali', 'Location', 'Best'); % Adjust legend location
+            title('Voltage');
 
             % Subplot for totali
             subplot(2, 1, 2);
@@ -200,28 +261,30 @@ classdef SimulinkUAVWrapper
             ylabel('TotalCurrent');
             xlabel('Time (s)');
             title('TotalCurrent');
+            legend('Current', 'Location', 'northeast');
+
             % Set the filename for the PNG image
             filename = fullfile(obj.resultsPath,'TotalCurrent_noenergyReward.png');
-            print(filename, '-dpng'); 
+            print(filename, '-dpng');
 
             % Create a new figure for the second subplot
             figure;
 
             % Plot postraj and refpostraj
-            plot3(postraj(:, 1), postraj(:, 2), postraj(:, 3), 'b', 'LineWidth', 1.5);
+            plot3(postraj(:, 1), postraj(:, 2), postraj(:, 3)-950, 'b', 'LineWidth', 1.5);
             hold on;
-            plot3(refpostraj(:, 1), refpostraj(:, 2), refpostraj(:, 3), 'r', 'LineWidth', 1.5);
+            % plot3(refpostraj(:, 1), refpostraj(:, 2), refpostraj(:, 3)-950, 'r', 'LineWidth', 1.5);
             hold off;
             xlabel('X, m');
             ylabel('Y, m');
             zlabel('Z, m');
             legend('actualTraj', 'refTraj', 'Location', 'Best');
-            title('T18 Trajectories'); 
+            title('Octo-copter Trajectory');
 
             % Adjust the figure layout
             axis equal;
             grid on;
-                        % Set the filename for the PNG image
+            % Set the filename for the PNG image
             filename = fullfile(obj.resultsPath,'T18-Trajectories_noenergyReward.png');
             print(filename, '-dpng');
         end

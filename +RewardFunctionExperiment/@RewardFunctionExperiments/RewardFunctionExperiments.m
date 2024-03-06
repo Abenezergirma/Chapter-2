@@ -11,7 +11,6 @@ classdef RewardFunctionExperiments
         energyRequirement % full name for the .mat file that stores the energy requirements of the mission
         resultsPath
         experimentName
-
         maxTotalPower  % Maximum total power for normalization
     end
 

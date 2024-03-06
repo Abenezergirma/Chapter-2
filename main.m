@@ -4,9 +4,9 @@ clear all; clc
 experimentName = 'packageEnergyReward';
 energyRewardRate = [0,0.3];% [0,0.1,0.2,0.3,0.4,0.5];
 
-for k = 1:length(energyRewardRate)
+for k = 2:length(energyRewardRate)
     fullName = strcat(experimentName,'rewardRate',num2str(energyRewardRate(k)));
-    TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
+    % TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
     EnergyRequirement.generateEnergyRequirement(fullName)
 end
 
@@ -25,6 +25,9 @@ for uav = 1:6
     rewardExpts.plotPowerProfiles(withoutEnergyReward,withEnergyReward,uav)
 end
 
+% waypoints = rewardExpts.NewconvertTrajectoriesToWaypoints(futureTraj(:,1:5:end,1:3), 10);
+% rewardExpts.plotAllTrajectoryAndWaypoints(futureTraj(:,1:5:end,1:3),waypoints(:,:,:))
+
 
 % UAV 1: Initial Position = [1000.000000, 0.000000, 1000.000000], Goal Position = [-1000.000000, 0.000000, 1000.000000]
 % UAV 2: Initial Position = [-1000.000000, 0.000000, 1000.000000], Goal Position = [0.000000, 0.000000, 1000.000000]
@@ -33,3 +36,15 @@ end
 % UAV 5: Initial Position = [-500.000000, 866.025404, 1000.000000], Goal Position = [500.000000, -866.025404, 1000.000000]
 % UAV 6: Initial Position = [500.000000, -866.025404, 1000.000000], Goal Position = [500.000000, 866.025404, 1000.000000]
 % UAV 7: Initial Position = [500.000000, 866.025404, 1000.000000], Goal Position = [1000.000000, 0.000000, 1000.000000]
+
+x1 = xTraj;
+y1 = yTraj;
+z1 = zTraj;
+x2 = xTraj;
+y2 = yTraj;
+z2 = zTraj;
+uav = 5;
+plot3(x1(uav,:),y1(uav,:),z1(uav,:))
+hold on
+plot3(x2(uav,:),y2(uav,:),z2(uav,:))
+
