@@ -13,10 +13,17 @@ Z = trajNoWind(:,1:2:end,3);
 
 plot3(X,Y,Z)
 
-DryVR_obj = TrajectoryPlanning.DryVR(aircraft.timeStep, aircraft.numSteps);
+DryVR_obj = DryVR(aircraft.timeStep, aircraft.numSteps);
 
 computeReachTube(aircraft, DryVR_obj);
 
+% plot(aircraft.reachSet(:,1,2))
+% hold on
+% plot(aircraft.reachSet(:,2,2))
+% 
+% plot3(aircraft.reachSet(:,1,2),aircraft.reachSet(:,1,3),aircraft.reachSet(:,1,4))
+% hold on
+% plot3(aircraft.reachSet(:,2,2),aircraft.reachSet(:,2,3),aircraft.reachSet(:,2,4))
 %% 
 reachTube = aircraft.reachSet;
 time = 0:0.01:(5)-0.04;
