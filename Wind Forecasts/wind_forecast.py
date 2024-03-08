@@ -70,6 +70,7 @@ def plot_wind_field_with_contour(file_path, vector_scale=60, subsample_rate=3):
             plt.xlabel('Longitude', fontsize=12)
             plt.ylabel('Latitude', fontsize=12)
             plt.grid(True)
+            plt.savefig('wind_contour.png', format='png', bbox_inches='tight', dpi=300)
             plt.show()
         else:
             print("Wind data is missing or not in the expected format.")
@@ -97,7 +98,7 @@ wind_data_json = {
 }
 
 # Define the path for the new JSON file
-wind_data_path = 'smaller_area_wind_data.json'
+wind_data_path = 'wind_data_DFW_at_0_5km_new.json'
 
 # Write the generated data to a new JSON file
 with open(wind_data_path, 'w') as file:
