@@ -29,21 +29,23 @@ U = wind_speeds .* cosd(wind_directions); % North component
 V = wind_speeds .* sind(wind_directions); % East component
 
 
-% Create grid for interpolation
-% Note: You might need to adjust the resolution and range depending on your specific area
-x_range = linspace(min(delta_lon_m), max(delta_lon_m), 100);
-y_range = linspace(min(delta_lat_m), max(delta_lat_m), 100);
-[X_grid, Y_grid] = meshgrid(x_range, y_range);
+% Prepare data for regression
+X = [delta_lon_m', delta_lat_m']; % Design matrix with coordinates
+Y_U = U'; % Response variable for U
+Y_V = V'; % Response variable for V
 
-% Grid the data
-grid_U = griddata(delta_lon_m, delta_lat_m, U, X_grid, Y_grid, 'linear');
-grid_V = griddata(delta_lon_m, delta_lat_m, V, X_grid, Y_grid, 'linear');
+% Linear regression model for U
+mdl_U = fitlm(X, Y_U);
 
-% Aircraft position in meters from the center
-aircraft_x = 10; % Define based on your simulation
-aircraft_y = 12;
+% Linear regression model for V
+mdl_V = fitlm(X, Y_V);
 
-% Interpolate wind speed components at aircraft position
-interpolated_U = interp2(X_grid, Y_grid, grid_U, aircraft_x, aircraft_y, 'linear');
-interpolated_V = interp2(X_grid, Y_grid, grid_V, aircraft_x, aircraft_y, 'linear');
+x_new = 100; 
+y_new = 100;
+% To predict using the models, for example:
+U_pred = predict(mdl_U, [x_new, y_new]);
+V_pred = predict(mdl_V, [x_new, y_new]);
+
+mdl_U = -9.0565 + 3.5107e-06*x_new - 3.4781e-06*y_new;
+mdl_V = -5.2024 - 4.6088e-07*x_new - 3.2683e-06*y_new;
 

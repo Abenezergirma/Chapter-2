@@ -29,7 +29,7 @@ classdef Ownship < handle
     properties (Access = public)
         % general Aircraft properties
         g = 9.81
-        timeStep = 0.1;
+        timeStep = 0.01;
         numSteps = 500;
         aircraftActions;
 
@@ -182,7 +182,9 @@ classdef Ownship < handle
 
             for i = 1:numSteps
                 % compute drag forces
-                [Dx, Dy, Dz] = computeDragForces(obj,x,y,z, Vx, Vy, Vz);
+                [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
+                %Dx = 0; Dy = 0; Dz =0; 
+
 
                 % Update the linear speeds [x4 - x6]
                 xDot = xDot + timestep.*((sin(theta).*cos(psi).*cos(phi) + sin(phi).*sin(psi)).*T/mt - Dx/mt);
@@ -315,12 +317,12 @@ classdef Ownship < handle
         function obj = Ownship(windDataPath,center_lon,center_lat)
             % A constructir method that initializes each aircraft in the game
             obj.aircraftActions = TrajectoryPlanning.Ownship.T18Actions;
-            [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
+             [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
         end
 
 
         function [Dx, Dy, Dz] = computeDragForces(obj,x,y,z, Vx, Vy, Vz)
-            Cd = 1.2; % drag coefficient
+            Cd = 1; % drag coefficient
             Axy = 0.403; % apparent face of the vehicle
             Ayx = 0.403;
             Ayz = 0.403;
@@ -333,9 +335,9 @@ classdef Ownship < handle
             Vr_x = Vx - Wx;
             Vr_y = Vy - Wy;
             Vr_z = 0;
-            Dx = -(1/2) * Cd * Ai * Vr_x * abs(Vr_x);
-            Dy = -(1/2) * Cd * Ai * Vr_y * abs(Vr_y);
-            Dz = -(1/2) * Cd * Ai * Vr_z * abs(Vr_z);
+            Dx = -(1/2) * Cd * Axy * Vr_x .* abs(Vr_x);
+            Dy = -(1/2) * Cd * Ayx * Vr_y .* abs(Vr_y);
+            Dz = -(1/2) * Cd * Ayz * Vr_z .* abs(Vr_z);
         end
 
         function [obj] = updateAircraftStates(obj,  currentStates)
@@ -397,7 +399,7 @@ classdef Ownship < handle
         end
 
         function obj = forwardSimulate(obj, controlActions,timeStep, numSteps)
-            obj.Traces = TrajectoryPlanning.Ownship.discreteOctocopterModel(obj, controlActions,timeStep, numSteps);
+            obj.Traces = TrajectoryPlanning.Ownship.OctocopterModelWind(obj, controlActions,timeStep, numSteps);
         end
 
         function obj = computeReachTube(obj, DryVR_obj)
@@ -413,10 +415,10 @@ classdef Ownship < handle
                 obj = forwardSimulate(obj, control_Actions,obj.timeStep, obj.numSteps);
             end
             traces = obj.Traces(3:end,floor(linspace(1,length(obj.Traces(1,:,1)),DryVR_obj.numTraces)),:);
-            t = 0:0.1:50-0.3;
+            t = 0:obj.timeStep:(obj.numSteps-3)*obj.timeStep;
 
-            traces(:,:,8) = repmat(t,1,1,DryVR_obj.numTraces); %DO this before the simulation
-            traces = permute(traces(:,:,[8,1:7]), [2,1,3]);
+            traces(:,:,end+1) = repmat(t,1,1,DryVR_obj.numTraces); %DO this before the simulation
+            traces = permute(traces(:,:,[end,1:end-1]), [2,1,3]);
             initialRadii = computeInitialRadii(DryVR_obj,traces);
             discrepancyParameters = computeDiscrepancyParameters(DryVR_obj, traces, initialRadii);
             reachTube = getReachtube(DryVR_obj, traces, initialRadii, discrepancyParameters);

@@ -182,8 +182,8 @@ classdef Ownship < handle
 
             for i = 1:numSteps
                 % compute drag forces
-                % [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
-                Dx = 0; Dy = 0; Dz =0; 
+                [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
+                %Dx = 0; Dy = 0; Dz =0; 
 
 
                 % Update the linear speeds [x4 - x6]
@@ -317,7 +317,7 @@ classdef Ownship < handle
         function obj = Ownship(windDataPath,center_lon,center_lat)
             % A constructir method that initializes each aircraft in the game
             obj.aircraftActions = TrajectoryPlanning.Ownship.T18Actions;
-            [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
+             [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
         end
 
 
@@ -329,8 +329,9 @@ classdef Ownship < handle
             rho = 1.223; % air density
 
             % Interpolate wind speed components at aircraft position
-            Wx = interp2(obj.X_grid, obj.Y_grid, obj.grid_U, x, y, 'linear');
-            Wy = interp2(obj.X_grid, obj.Y_grid, obj.grid_V, x, y, 'linear');
+            % Interpolate wind speed components at aircraft position
+            Wx = (-9.0565 + 3.5107e-06*x - 3.4781e-06*y)*0.5;
+            Wy = (-5.2024 - 4.6088e-07*x - 3.2683e-06*y)*0.5;
 
             Vr_x = Vx - Wx;
             Vr_y = Vy - Wy;

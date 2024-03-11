@@ -4,10 +4,10 @@ clear all; clc
 experimentName = 'packageEnergyReward';
 energyRewardRate = [0,0.3];% [0,0.1,0.2,0.3,0.4,0.5];
 
-for k = 2:length(energyRewardRate)
+for k = 1:length(energyRewardRate)
     fullName = strcat(experimentName,'rewardRate',num2str(energyRewardRate(k)));
-    TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
-    % EnergyRequirement.generateEnergyRequirement(fullName)
+    % TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
+    EnergyRequirement.generateEnergyRequirement(fullName)
 end
 
 resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
@@ -18,7 +18,7 @@ withoutEnergyReward = withoutEnergyReward.results;
 withEnergyReward = withEnergyReward.results;
 maxPower = 10e6;
 
-for uav = 1:6
+for uav = 1:2
     rewardExpts = RewardFunctionExperiment.RewardFunctionExperiments(maxPower);
     rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
     rewardExpts.experimentName = 'rewardExperimentBatteryParams.mat';
@@ -37,14 +37,5 @@ end
 % UAV 6: Initial Position = [500.000000, -866.025404, 1000.000000], Goal Position = [500.000000, 866.025404, 1000.000000]
 % UAV 7: Initial Position = [500.000000, 866.025404, 1000.000000], Goal Position = [1000.000000, 0.000000, 1000.000000]
 
-x1 = xTraj;
-y1 = yTraj;
-z1 = zTraj;
-x2 = xTraj;
-y2 = yTraj;
-z2 = zTraj;
-uav = 5;
-plot3(x1(uav,:),y1(uav,:),z1(uav,:))
-hold on
-plot3(x2(uav,:),y2(uav,:),z2(uav,:))
+
 

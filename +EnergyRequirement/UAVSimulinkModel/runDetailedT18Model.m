@@ -9,6 +9,44 @@ Motor=load('params/KDE4213XF-360_performancedata.mat').Motor;
 battery=load('params/battery_Tattu.mat').battery;
 battery.sampleTime = 0.1;
 windspecs=load('params/TarotT18_windspecs.mat').windspecs;
+center_lon = (-96.94 + -96.7600)/2;
+center_lat = (33.06 + 33.22)/2;
+windDataPath = 'smaller_area_wind_data.json';
+
+% Create BusElement for the 'values' field, assuming it's a 100x100 matrix of doubles
+valuesElement = Simulink.BusElement;
+valuesElement.Name = 'values';
+valuesElement.Dimensions = [100 100];
+valuesElement.DataType = 'double';
+
+% Create BusElement for the 'dimensions' field, assuming it's a 2-element vector of doubles
+dimensionsElement = Simulink.BusElement;
+dimensionsElement.Name = 'dimensions';
+dimensionsElement.Dimensions = [1 2];
+dimensionsElement.DataType = 'double';
+
+% Create the bus object that encapsulates both elements
+arrayBus = Simulink.Bus;
+arrayBus.Elements = [valuesElement, dimensionsElement];
+
+[grid_u, grid_v, x_grid, y_grid] = processWindData(windDataPath, center_lon, center_lat);
+
+grid_U.time = 0;
+grid_U.signals.values = grid_u; 
+grid_U.signals.dimensions = size(grid_u);
+
+grid_V.time = 0;
+grid_V.signals.values = grid_v; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
+grid_V.signals.dimensions = size(grid_v);
+
+X_grid.time = 0;
+X_grid.signals.values = x_grid; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
+X_grid.signals.dimensions = size(x_grid);
+
+Y_grid.time = 0;
+Y_grid.signals.values = y_grid; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
+Y_grid.signals.dimensions = size(y_grid);
+
 
 
 %% trajectory settings/ mission plan / initial conditions
@@ -87,15 +125,15 @@ for waypts=1:length(xyzref)
     att=state.Data(:,7:9);
     rpm=motorsrpm.Data(:,1:8);
     refpos=refposition.Data(:,1:3);
-    batvar=battery_data.Data(:,1:3);   
+    batvar=battery_data.Data(:,1:3);
 
     % save variables
-     postraj=[postraj;pos];
-     veltraj=[veltraj;vel];
-     atttraj=[atttraj;att];
-     rpmtraj=[rpmtraj;rpm];
-     refpostraj=[refpostraj;refpos];
-     batvartraj=[batvartraj;batvar];
+    postraj=[postraj;pos];
+    veltraj=[veltraj;vel];
+    atttraj=[atttraj;att];
+    rpmtraj=[rpmtraj;rpm];
+    refpostraj=[refpostraj;refpos];
+    batvartraj=[batvartraj;batvar];
 
     %reset initial conditions to start from last simulation step
     [IC,battery] = resetinitial(IC,battery,state.Data,battery_variables.Data);
@@ -111,67 +149,40 @@ totali=batvartraj(:,1);
 voltage=batvartraj(:,2);
 SOC=batvartraj(:,3);
 
-% 2 D trajectory visualization
-% figure1 = figure;
-% hold on;
-% scatter(refpostraj(:,1),refpostraj(:,2),200,'x');
-% scatter(postraj(:,1),postraj(:,2),25);
-% title('trajectory')
+end
 
-% plot3(refpostraj(:,1),refpostraj(:,2),refpostraj(:,3))
-% hold on
-% plot3(postraj(:,1),postraj(:,2),postraj(:,3))
+function [grid_U, grid_V, X_grid, Y_grid] = processWindData(jsonPath, center_lon, center_lat)
+% Load wind data from a JSON file
+data = jsondecode(fileread(jsonPath));
 
+% Earth's radius in meters
+R = 6371000;
 
-% altitude visualization
-% figurealt = figure;
-% hold on;
-% plot(time,postraj(:,1)); 
-% plot(time,postraj(:,2)); 
-% plot(time,postraj(:,3)); 
-% title('position vis')
+% Assume wind_data contains fields for coordinates, wind_speed, and wind_direction
+wind_data = data.wind_data;
 
-% speeds
-% figure16 = figure;
-% hold on;
-% plot(time,veltraj); 
-% title('linear velocity')
+% Extract longitude, latitude, wind speed, and direction
+longitudes = cellfun(@(c) c(1), {wind_data.coordinates});
+latitudes = cellfun(@(c) c(2), {wind_data.coordinates});
+wind_speeds = [wind_data.wind_speed];
+wind_directions = [wind_data.wind_direction]; % Assuming this is in degrees from north
 
-% trajectory error
-% figure12 = figure;
-% hold on;
-% xerror=refpostraj(:,1)-postraj(:,1);
-% yerror=refpostraj(:,2)-postraj(:,2);
-% zerror=refpostraj(:,3)-postraj(:,3);
-% plot(time,xerror);
-% plot(time,yerror);
-% plot(time,zerror);
-% title('X,Y,Z error')
+% Convert differences in latitudes and longitudes from degrees to meters
+delta_lon_m = (longitudes - center_lon) .* cosd(center_lat) * (pi * R / 180);
+delta_lat_m = (latitudes - center_lat) * (pi * R / 180);
 
-% motor angular velocity data
-% figure13 = figure;
-% plot(time,rpmtraj);  
-% title('Motor rpm data')
+% Convert wind speed and direction into north and east components
+U = wind_speeds .* cosd(wind_directions); % North component
+V = wind_speeds .* sind(wind_directions); % East component
 
-% attitude
-% figure17= figure;
-% hold on;
-% plot(time,atttraj); %roll,pitch,yaw
-% title('roll, pitch, yaw')
+% Create grid for interpolation
+x_range = linspace(min(delta_lon_m), max(delta_lon_m), 100);
+y_range = linspace(min(delta_lat_m), max(delta_lat_m), 100);
+[X_grid, Y_grid] = meshgrid(x_range, y_range);
 
-% total current data
-% figure14 = figure;
-% hold on;
-% plot(timeb,totali); 
-% title('current consumption')
+% Interpolate U and V components onto the grid
+grid_U = griddata(delta_lon_m, delta_lat_m, U, X_grid, Y_grid, 'linear');
+grid_V = griddata(delta_lon_m, delta_lat_m, V, X_grid, Y_grid, 'linear');
 
-% Voltage and State of charge change with time
-% figure15 = figure;
-% plot(timeb,voltage); 
-% title('voltage')
-
-% figure151 = figure;
-% plot(timeb,SOC*100); 
-% title('SOC')
-
-% end
+% The function returns the gridded U and V components, along with the grid coordinates
+end

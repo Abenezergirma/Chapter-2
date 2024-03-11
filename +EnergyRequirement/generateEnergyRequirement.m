@@ -7,7 +7,7 @@ projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2';
 %% Load Trajectory Data
 % Load x, y, and z trajectories from the specified files
 trajectoriesPath = 'TrajectoryPlanningResults';
-numDrones = 6;
+numDrones = 2;
 % Create the full file path
 % Create the full file path
 baseFileNameX = strcat(experimentName,'XTrajectory');
@@ -76,12 +76,12 @@ wayPoints = T18Wrapper.smoothTrajectoryVectorized(trajectories, numWaypoints);
 % plotTrajectoriesAndWaypoints(T18Wrapper, trajectories1, wayPoints1, trajectories2, wayPoints2)
 %% Visualization
 % Specify the UAV to visualize and plot its trajectory and waypoints
-for uav =1:6
-T18Wrapper.plotTrajectoryAndWaypoints([xTraj(uav,:)', yTraj(uav,:)', zTraj(uav,:)'], wayPoints(:,uav,:))
-end
+% for uav =1:numDrones
+% T18Wrapper.plotTrajectoryAndWaypoints([xTraj(uav,:)', yTraj(uav,:)', zTraj(uav,:)'], wayPoints(:,uav,:))
+% end
 %% Model Execution
 % Run the Simulink model
-if false
+if true
 T18Wrapper.runModel(wayPoints);
 end
 
@@ -90,5 +90,5 @@ end
 cd(projectPath);
 
 load(T18Wrapper.BatteryParams)
-T18Wrapper.generateBatteryParametersPlot(results,uav)
+% T18Wrapper.generateBatteryParametersPlot(results,uav)
 end

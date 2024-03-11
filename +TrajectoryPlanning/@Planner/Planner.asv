@@ -46,7 +46,7 @@ classdef Planner < TrajectoryPlanning.Ownship
 
                 case {'circle'}
                     % N - Number Of vertiports
-                    radius = 1500;
+                    radius = 500;
 
                     % Generate Circle Points
                     points = linspace(0, 2*pi, N*10);
@@ -61,7 +61,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                     phi = psi;     % Same value as psi
                     %         initialStates = [X', Y', Z', psi, gamma, phi, V]; %use this for fixed wing
                     initialStates = [X, Y, Z, psi, gamma, phi ,psi, gamma, phi, psi, gamma, phi];
-
+                    goals = flipud(initialStates);
                 case {'random'}
                     % N - Number of random initial points
                     hardDeck = 100;
@@ -336,13 +336,12 @@ classdef Planner < TrajectoryPlanning.Ownship
             end
 
             % save('futureTraj.mat','futureTraj')
-
-            
-            X = futureTraj(:,1:2:end,1);
-            Y = futureTraj(:,1:2:end,2);
-            Z = futureTraj(:,1:2:end,3);
-
-            plot3(X,Y,Z)
+            % 
+            % X = futureTraj(:,1:2:end,1);
+            % Y = futureTraj(:,1:2:end,2);
+            % Z = futureTraj(:,1:2:end,3);
+            % 
+            % plot3(X,Y,Z)
 
             if obj.energyRewardRate == 0
                 nextStep = 10;
@@ -426,13 +425,31 @@ classdef Planner < TrajectoryPlanning.Ownship
                 penalityFunc = 5000 - altitude;
                 totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc(belowLevel);
             end
+            % extract x and y pos and speeds of the aircraft for wind energy reward 
+            x = states(:,:,1);
+            y = states(:,:,2);
+            Vx = states(:,:,4);
+            Vy = states(:,:,5);
+            
+
+            % Interpolate wind speed components at aircraft position
+            Wx = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_U, x, y, 'linear');
+            Wy = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_V, x, y, 'linear');
+            
+            % windEnergyReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
+
             if obj.energyRewardRate ~= 0
                 % Add battery energy related rewards
-                distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
-                % energyReq = 2067*exp(0.0128*distances);
-                energyReq = predictEnergy(obj,distances);
-
-                energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq,1))'; %change energyRewardRate
+                % distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
+                % % energyReq = 2067*exp(0.0128*distances);
+                % energyReq = predictEnergy(obj,distances);
+                % 
+                % energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq,1))'; %change energyRewardRate
+                
+                energyReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
+                % energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq',1))'; %change energyRewardRate
+                
+        
             else
                 energyReward = 0;
 
@@ -460,6 +477,48 @@ classdef Planner < TrajectoryPlanning.Ownship
             % Calculate the Euclidean distances with altitude sign adjustment
             distances = sqrt(sum(deltaPosition.^2, 3));
         end
+
+        function totalReward = calculateWindEnergyReward(obj, vx, vy, wx, wy)
+            v = zeros(size(vx, 1), size(vx, 2), 2); % Aircraft velocity vector
+            v(:,:,1) = vx;
+            v(:,:,2) = vy;
+
+            w = zeros(size(wx, 1), size(wx, 2), 2);  % Wind velocity vector
+            w(:,:,1) = wx;
+            w(:,:,2) = wy;
+
+            % Extract components of v and w
+            vx = v(:,:,1);
+            vy = v(:,:,2);
+            wx = w(:,:,1);
+            wy = w(:,:,2);
+
+            % Compute dot products and magnitudes
+            dotProducts = vx .* wx + vy .* wy;
+            magsV = sqrt(vx.^2 + vy.^2);
+            magsW = sqrt(wx.^2 + wy.^2);
+
+            % Compute cosine of the angle
+            cosTheta = dotProducts ./ (magsV .* magsW);
+
+            % Ensure the cosine values are within the valid range [-1, 1]
+            cosTheta = max(min(cosTheta, 1), -1);
+
+
+            % Calculate the cosine of the angle between the two vectors
+            cosTheta = dot(v, w) ./ (norm(v) .* norm(w));
+
+            % Constants
+            A = 500;
+            B = 20;
+
+            % Calculate the reward
+            reward = A .* cosTheta + B;
+
+            % Return the total reward
+            totalReward = reward;
+        end
+
 
         function energyArray = predictEnergy(obj,distances)
             % Define the coefficients for each step

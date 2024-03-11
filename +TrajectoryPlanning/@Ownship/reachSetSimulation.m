@@ -5,13 +5,21 @@ center_lon = -96.94;
 center_lat = 33.06;
 windDataPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/Wind Forecasts/smaller_area_wind_data.json';
 aircraft = TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
+trajWind = TrajectoryPlanning.Ownship.OctocopterModelWind(aircraft,aircraft.aircraftActions,aircraft.timeStep, aircraft.numSteps);
+
+X = trajWind(:,1:2:end,1);
+Y = trajWind(:,1:2:end,2);
+Z = trajWind(:,1:2:end,3);
+
 trajNoWind = TrajectoryPlanning.Ownship.OctocopterModelWind(aircraft,aircraft.aircraftActions,aircraft.timeStep, aircraft.numSteps);
+noWindX = trajNoWind(:,1:2:end,1);
+noWindY = trajNoWind(:,1:2:end,2);
+noWindZ = trajNoWind(:,1:2:end,3);
 
-X = trajNoWind(:,1:2:end,1);
-Y = trajNoWind(:,1:2:end,2);
-Z = trajNoWind(:,1:2:end,3);
-
-plot3(X,Y,Z)
+trajIndex = 100;
+plot3(X(:,trajIndex),Y(:,trajIndex),Z(:,trajIndex))
+hold on
+plot3(noWindX(:,trajIndex),noWindY(:,trajIndex),noWindZ(:,trajIndex))
 
 DryVR_obj = TrajectoryPlanning.DryVR(aircraft.timeStep, aircraft.numSteps);
 
@@ -40,6 +48,7 @@ ylabel('x in meters')
 xlabel('time in seconds')
 legend(h(2:end),'Upper Bound','Lower Bound', 'Location','northwest')
 title('Reachable set of the aircraft (state x)') 
+print -dpng state_x.png
 
 h = zeros(1,3);
 figure(2)
@@ -51,6 +60,7 @@ ylabel('y in meters')
 xlabel('time in seconds')
 legend(h(2:end),'Upper Bound','Lower Bound', 'Location','northwest')
 title('Reachable set of the aircraft (state y)') 
+print -dpng state_y.png
 
 h = zeros(1,3);
 figure(3) 
@@ -62,3 +72,21 @@ ylabel('z in meters')
 xlabel('time in seconds')
 legend(h(2:end),'Upper Bound','Lower Bound', 'Location','northwest')
 title('Reachable set of the aircraft (state z)') 
+print -dpng state_z.png
+%%
+xReward = xTraj;
+yReward = yTraj;
+zReward = zTraj;
+
+trajIndex = 2;
+plot3(xTraj(trajIndex,:), yTraj(trajIndex,:), zTraj(trajIndex,:)) % Plot the trajectory
+hold on
+plot3(xReward(trajIndex,:), yReward(trajIndex,:), zReward(trajIndex,:)) % Plot the rewards
+
+% Add legends
+legend('without R', 'With R')
+
+
+
+
+

@@ -7,7 +7,7 @@ classdef DryVR < handle
 
         timestep = 0.1; % time step for simulating the traces
         numSteps = 500; % N for simulating the traces using euler method
-        numTraces = 70; % number of traces that needs to be generated to get the reachset
+        numTraces = 200; % number of traces that needs to be generated to get the reachset
 
         DEG2RAD=0.0174533; %degree to rad coverting constant
         RAD2DEG = 57.29577951308232; %rad to degree converting constant

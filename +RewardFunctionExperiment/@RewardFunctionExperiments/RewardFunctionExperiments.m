@@ -1,7 +1,7 @@
 classdef RewardFunctionExperiments
     properties
         % Use the concept of composition to import the two vehicle models
-        lowFidelityModel  = TrajectoryPlanning.Ownship(); % Low-fidelity UAV model
+        % lowFidelityModel  = TrajectoryPlanning.Ownship(); % Low-fidelity UAV model
         timeStep = 0.1;
 
         highFidelityModelPath

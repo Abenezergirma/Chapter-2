@@ -7,8 +7,8 @@ resultsPath = 'TrajectoryPlanningResults';
 totalAgents = 2;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-center_lon = -96.94;
-center_lat = 33.06;
+center_lon = (-96.94 + -96.7600)/2;
+center_lat = (33.06 + 33.22)/2;
 windDataPath = 'Wind Forecasts/smaller_area_wind_data.json';
 planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,...
     experimentName, windDataPath,center_lon,center_lat);
@@ -17,11 +17,13 @@ planner.energyRewardRate = energyRewardRate;
 % [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
 %% Instantiate Ownship Class for Each Aircraft
-[assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
-yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+% [assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
+% yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+% 
+% initialStates = [assignedInitials(1:totalAgents,:),zeros(totalAgents,9)];
+% initialStates(:,9) = yawAngles(1:totalAgents,:);
 
-initialStates = [assignedInitials(1:totalAgents,:),zeros(totalAgents,9)];
-initialStates(:,9) = yawAngles(1:totalAgents,:);
+[initialStates, assignedGoals] = planner.scenarioGenerator(totalAgents, 'circle');
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
     droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));
