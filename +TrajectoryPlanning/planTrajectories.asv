@@ -1,23 +1,36 @@
-function plotTrajectories(experimentName,energyRewardRate)
+function plotTrajectories(experimentName,smoothnessRewardRate,windRewardRate)
 % clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
 %% Initialization
 resultsPath = 'TrajectoryPlanningResults';
-totalAgents = 6;
+totalAgents = 2;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName);
-planner.energyRewardRate = energyRewardRate;
+center_lon = (-96.94 + -96.7600)/2;
+center_lat = (33.06 + 33.22)/2;
+windDataPath = 'Wind Forecasts/smaller_area_wind_data.json';
+planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,...
+    experimentName, windDataPath,center_lon,center_lat);
+% planner.energyRewardRate = energyRewardRate;
+planner.smoothnessRewardRate = smoothnessRewardRate;
+planner.windRewardRate = smoothnessRewardRate;
 %% Generate Initial States and Goals
 % [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
 %% Instantiate Ownship Class for Each Aircraft
-[assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
-yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+% [assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
+% yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+% 
+% initialStates = [assignedInitials(1:totalAgents,:),zeros(totalAgents,9)];
+% initialStates(:,9) = yawAngles(1:totalAgents,:);
 
-initialStates = [assignedInitials,zeros(totalAgents,9)];
-initialStates(:)
+[initialStates, assignedGoals] = planner.scenarioGenerator(totalAgents, 'circle');
+initialStates(:,1) = [0;500];
+initialStates(:,2) = [0;500];
+assignedGoals(:,1) = [0;500];
+assignedGoals(:,2) = [0;500];
+
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
     droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));
@@ -36,7 +49,7 @@ while numLeft > 0
     [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft);
 
     % Monitor the status of the game
-    [terminal, NMACs, droneList] = planner.terminalDetection(droneList);
+    [terminal, NMACs, droneList] = planner.terminalDetection(droneList,j);
     totalNMACs = totalNMACs + NMACs;
     stepTimer = [stepTimer, toc];  % Record elapsed time
     j = j + 1;
@@ -55,7 +68,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
 
 %% Supporting Functions
     function drone = initializeDrone(id, initState, goal)
-        drone = TrajectoryPlanning.Ownship();
+        drone = TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
         drone.aircraftID = id;
         drone.goal = goal;
         drone = updateAircraftStates(drone, initState);
@@ -73,7 +86,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
                 ownship = selectBestAction(ownship, totalValues, futureActions, futureStates, oneStepStates);
                 ownship = updateAircraftStates(ownship, ownship.nextStates);
                 ownship.Traces = 0;
-                if norm(ownship.currentStates(1:3) - ownship.goal) < 10
+                if norm(ownship.currentStates(1:3) - ownship.goal) < 20
                     ownship.dead = true;
                     disp(['ownship ', num2str(ownship.aircraftID), ' made it to goal, removed']);
                     numLeft = numLeft - 1;

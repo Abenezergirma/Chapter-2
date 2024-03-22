@@ -404,7 +404,172 @@ classdef RewardFunctionExperiments
             end
         end
 
-        function plotPowerProfiles(obj, withoutEnergyReward, withEnergyReward, uav)
+        function plotPowerProfiles(obj, allData, allNames, uav)
+            % Prepare the figure
+            % Prepare the figure
+            figure('Color', 'w', 'Position', [100, 100, 1200, 600]);
+
+            % Define line styles
+            lineStyles = {'-', '--', ':', '-.'};
+            numStyles = length(lineStyles);
+
+            % Generate a colormap and select a subset of colors
+            totalPlots = length(allData);
+            myColors = lines(totalPlots); % 'lines' is one of MATLAB's built-in colormaps
+
+            % Subplot for Power Profiles
+            subplot(2,1,1); % This specifies a 2-row, 1-column grid of subplots, and activates the first subplot for the power profiles.
+            hold on;
+
+            for idx = 1:length(allData)
+                % Extract the dataset
+                data = allData{idx};
+                fullName = allNames{idx}; % Assuming each dataset's name is stored in `allNames`
+                [SOC, totali, voltage, ~, ~, time, timeb] = deal(data.results{uav,1}, data.results{uav,2}, data.results{uav,3}, ...
+                    data.results{uav,4}, data.results{uav,5}, data.results{uav,6}, data.results{uav,7});
+
+
+                % Ensure column vectors
+                timeb = timeb(:);
+                totali = totali(:);
+                voltage = voltage(:);
+
+                % Calculate the power profile
+                powerProfile = totali .* voltage;
+
+                color = myColors(idx, :);
+                lineStyle = lineStyles{mod(idx-1, numStyles) + 1};
+
+
+                % Plot the power profile
+                plot(timeb, powerProfile, 'LineWidth', 2, 'DisplayName', fullName, 'Color', color, 'LineStyle', lineStyle);
+            end
+
+            xlabel('Time (s)');
+            ylabel('Power (W)');
+            title('Comparison of Power Profiles Across Conditions');
+            legend('Location', 'Best');
+            grid on;
+            hold off;
+
+            % Subplot for Cumulative Energy
+            subplot(2,1,2); % Activates the second subplot for the cumulative energy.
+            hold on;
+
+            for idx = 1:length(allData)
+                data = allData{idx};
+                fullName = allNames{idx}; % Using the name as the legend label
+                [SOC, totali, voltage, ~, ~, time, timeb] = deal(data.results{uav,1}, data.results{uav,2}, data.results{uav,3}, ...
+                    data.results{uav,4}, data.results{uav,5}, data.results{uav,6}, data.results{uav,7});
+
+
+                % Ensure column vectors
+                timeb = timeb(:);
+                totali = totali(:);
+                voltage = voltage(:);
+
+                % Calculate the power profile
+                powerProfile = totali .* voltage;
+
+                % Compute cumulative energy
+                energyProfile = cumtrapz(timeb, powerProfile);
+
+                color = myColors(idx, :);
+                lineStyle = lineStyles{mod(idx-1, numStyles) + 1};
+
+                % Plot the cumulative energy
+                plot(timeb, energyProfile, 'LineWidth', 2, 'DisplayName', fullName, 'Color', color, 'LineStyle', lineStyle);
+            end
+
+            xlabel('Time (s)');
+            ylabel('Energy (J)');
+            title('Comparison of Cumulative Energy Across Conditions');
+            legend('Location', 'Best');
+            grid on;
+            hold off;
+
+            % Save the figure as before
+            filename = fullfile(obj.resultsPath, 'PowerAndEnergyComparison.png');
+            print(filename, '-dpng'); % '-dpng' specifies the format
+        end
+
+        function plotPowerProfilesWithBar(obj, allData, allNames, uav)
+            % Prepare the figure
+            figure('Color', 'w', 'Position', [100, 100, 1200, 800]);
+
+            % Define line styles and generate a colormap for distinct plots
+            lineStyles = {'-', '--', ':', '-.'};
+            numStyles = length(lineStyles);
+            totalPlots = length(allData);
+            myColors = lines(totalPlots); % Generate distinct colors
+
+            % First subplot for cumulative energy line plots
+            subplot(2,1,1); % Use for cumulative energy plots
+            hold on;
+            finalEnergyValues = zeros(totalPlots, 1); % To store final cumulative energy values
+
+            for iPlot = 1:totalPlots
+                data = allData{iPlot};
+                fullName = allNames{iPlot}; % Assuming you have this variable prepared
+                [SOC, totali, voltage, ~, ~, time, timeb] = deal(data.results{uav,1}, data.results{uav,2}, data.results{uav,3}, ...
+                    data.results{uav,4}, data.results{uav,5}, data.results{uav,6}, data.results{uav,7});
+
+                timeb = timeb(:); totali = totali(:); voltage = voltage(:);
+                powerProfile = totali .* voltage;
+                energyProfile = cumtrapz(timeb, powerProfile);
+                finalEnergyValues(iPlot) = energyProfile(end); % Store last value for bar chart
+
+                color = myColors(iPlot, :);
+                lineStyle = lineStyles{mod(iPlot-1, numStyles) + 1};
+                plot(timeb, energyProfile, 'LineWidth', 2, 'DisplayName', fullName, 'Color', color, 'LineStyle', lineStyle);
+            end
+
+            xlabel('Time (s)');
+            ylabel('Cumulative Energy (J)');
+            title('Cumulative Energy Profiles');
+            legend('Location', 'Best');
+            grid on;
+            hold off;
+
+            % Second subplot for final cumulative energy values as a bar chart
+            subplot(2,1,2); % Use for the bar chart of final values
+            hold on; % Enable holding multiple plots
+
+            % Plot each bar individually to set colors
+            for iBar = 1:length(finalEnergyValues)
+                bar(iBar, finalEnergyValues(iBar), 'FaceColor', myColors(iBar, :));
+            end
+
+            % Adding labels to each bar with its value
+            for i = 1:length(finalEnergyValues)
+                text(i, finalEnergyValues(i), sprintf('%.2f J', finalEnergyValues(i)), ...
+                    'HorizontalAlignment', 'center', ...
+                    'VerticalAlignment', 'bottom');
+            end
+
+            % Set the x-tick labels to the names of the datasets
+            set(gca, 'xtick', 1:totalPlots, 'xticklabel', allNames);
+            xtickangle(45); % Angle the labels for better readability
+
+            ylabel('Final Cumulative Energy (J)');
+            title('Final Cumulative Energy Values');
+            grid on;
+
+            % Adjust the legend to be outside the plot for the bar chart as well
+            % Since we're adding bars in a loop, the legend call should reference
+            % dummy objects for clarity in legend creation
+            legendEntries = arrayfun(@(x) plot(NaN, NaN, 'Color', myColors(x, :)), 1:totalPlots, 'UniformOutput', false);
+            legend([legendEntries{:}], allNames, 'Location', 'eastoutside');
+
+            hold off;
+
+
+            % Save the figure as before
+            filename = fullfile(obj.resultsPath, 'CumulativeEnergyAndBarChart.png');
+            print(filename, '-dpng'); % '-dpng' specifies the format
+        end
+
+        function plotPowerProfilesOld(obj, withoutEnergyReward, withEnergyReward, uav)
 
             % for uav = 1:6
             [SOC,totali,voltage,postraj,refpostraj,time,timeb] = deal(withoutEnergyReward{uav,1},withoutEnergyReward{uav,2},withoutEnergyReward{uav,3}, ...
@@ -416,7 +581,7 @@ classdef RewardFunctionExperiments
             % plot3(postraj1(:,1),postraj1(:,2),postraj1(:,3))
             % hold on
             % plot3(refpostraj1(:,1),refpostraj1(:,2),refpostraj1(:,3))
-            % 
+            %
             % plot3(postraj(:,1),postraj(:,2),postraj(:,3))
             % hold on
             % plot3(refpostraj(:,1),refpostraj(:,2),refpostraj(:,3))

@@ -1,4 +1,4 @@
-function plotTrajectories(experimentName,energyRewardRate)
+function plotTrajectories(experimentName,smoothnessRewardRate,windRewardRate)
 % clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
@@ -12,7 +12,9 @@ center_lat = (33.06 + 33.22)/2;
 windDataPath = 'Wind Forecasts/smaller_area_wind_data.json';
 planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,...
     experimentName, windDataPath,center_lon,center_lat);
-planner.energyRewardRate = energyRewardRate;
+% planner.energyRewardRate = energyRewardRate;
+planner.smoothnessRewardRate = smoothnessRewardRate;
+planner.windRewardRate = smoothnessRewardRate;
 %% Generate Initial States and Goals
 % [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
@@ -24,6 +26,12 @@ planner.energyRewardRate = energyRewardRate;
 % initialStates(:,9) = yawAngles(1:totalAgents,:);
 
 [initialStates, assignedGoals] = planner.scenarioGenerator(totalAgents, 'circle');
+initialStates(:,1) = [100;700];
+initialStates(:,2) = [100;450];
+assignedGoals(:,1) = [700;100];
+assignedGoals(:,2) = [450;100];
+
+
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
     droneList{i} = initializeDrone(i, initialStates(i,:), assignedGoals(i,1:3));
@@ -79,7 +87,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
                 ownship = selectBestAction(ownship, totalValues, futureActions, futureStates, oneStepStates);
                 ownship = updateAircraftStates(ownship, ownship.nextStates);
                 ownship.Traces = 0;
-                if norm(ownship.currentStates(1:3) - ownship.goal) < 20
+                if norm(ownship.currentStates(1:3) - ownship.goal) < 10
                     ownship.dead = true;
                     disp(['ownship ', num2str(ownship.aircraftID), ' made it to goal, removed']);
                     numLeft = numLeft - 1;

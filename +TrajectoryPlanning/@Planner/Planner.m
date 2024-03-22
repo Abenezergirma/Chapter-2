@@ -4,7 +4,8 @@ classdef Planner < TrajectoryPlanning.Ownship
         totalAgents
         totalNMACs
         experimentName
-        energyRewardRate
+        smoothnessRewardRate
+        windRewardRate
     end
 
     methods(Access = private)
@@ -51,7 +52,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                     % Generate Circle Points
                     points = linspace(0, 2*pi, N*10);
                     X = radius * cos(points(1:10:end))';
-                    Y = radius * sin(points(1:10:end))';
+                    Y = radius * sin(points(1:10:end))' +500;
                     Z = repmat(100, length(X), 1);
 
                     % Define Orientation Angles
@@ -343,7 +344,7 @@ classdef Planner < TrajectoryPlanning.Ownship
             % 
             % plot3(X,Y,Z)
 
-            if obj.energyRewardRate == 0
+            if obj.smoothnessRewardRate == 0
                 nextStep = 10;
             else
                 nextStep = 100;
@@ -421,7 +422,7 @@ classdef Planner < TrajectoryPlanning.Ownship
             if true
                 altitude = states(:,:,3)';
                 altitude = altitude(:);
-                belowLevel = altitude < 900;
+                belowLevel = altitude < 80;
                 penalityFunc = 5000 - altitude;
                 totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc(belowLevel);
             end
@@ -433,23 +434,25 @@ classdef Planner < TrajectoryPlanning.Ownship
             
 
             % Interpolate wind speed components at aircraft position
-            Wx = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_U, x, y, 'linear');
-            Wy = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_V, x, y, 'linear');
-            
+            % Wx = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_U, x, y, 'linear');
+            % Wy = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_V, x, y, 'linear');
+            [Wx, Wy] = calculateWindComponents(ownship, x(:), y(:));
+            Wx = reshape(Wx, lenFutureTraj, numFuturePoints)';
+            Wy = reshape(Wy, lenFutureTraj, numFuturePoints)';
+
+
             % windEnergyReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
 
-            if obj.energyRewardRate ~= 0
+            if true %obj.energyRewardRate ~= 0
                 % Add battery energy related rewards
-                % distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
+                distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
                 % % energyReq = 2067*exp(0.0128*distances);
-                % energyReq = predictEnergy(obj,distances);
+                energyReq = predictEnergy(obj,distances);
                 % 
-                % energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq,1))'; %change energyRewardRate
+                smoothnessReward = energyReq.*linspace(0,obj.smoothnessRewardRate,size(energyReq,1))'; %change energyRewardRate
                 
-                energyReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
-                % energyReward = energyReq.*linspace(0,obj.energyRewardRate,size(energyReq',1))'; %change energyRewardRate
-                
-        
+                windReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy)*obj.windRewardRate;
+                energyReward = windReward - smoothnessReward; %double check the +/- logic here 
             else
                 energyReward = 0;
 
@@ -457,7 +460,7 @@ classdef Planner < TrajectoryPlanning.Ownship
             end
             % energyReqs = obj.energyReqPerAction.interpolatedEnergyReqs*obj.energyRewardRate;
 
-            totalValues = reshape(totalValues, lenFutureTraj, numFuturePoints)' - energyReward;
+            totalValues = reshape(totalValues, lenFutureTraj, numFuturePoints)' + energyReward;
         end
 
         function distances = calculateDistances(obj, ownshipCurrentStates, states)
@@ -479,20 +482,6 @@ classdef Planner < TrajectoryPlanning.Ownship
         end
 
         function totalReward = calculateWindEnergyReward(obj, vx, vy, wx, wy)
-            % v = zeros(size(vx, 1), size(vx, 2), 2); % Aircraft velocity vector
-            % v(:,:,1) = vx;
-            % v(:,:,2) = vy;
-            % 
-            % w = zeros(size(wx, 1), size(wx, 2), 2);  % Wind velocity vector
-            % w(:,:,1) = wx;
-            % w(:,:,2) = wy;
-            % 
-            % % Extract components of v and w
-            % vx = v(:,:,1);
-            % vy = v(:,:,2);
-            % wx = w(:,:,1);
-            % wy = w(:,:,2);
-
             % Compute dot products and magnitudes
             dotProducts = vx .* wx + vy .* wy;
             magsV = sqrt(vx.^2 + vy.^2);
@@ -506,10 +495,10 @@ classdef Planner < TrajectoryPlanning.Ownship
 
             % Constants
             A = 500;
-            B = 20;
+            B = 100;
 
             % Calculate the reward
-            reward = A .* cosTheta + B;
+            reward = (A .* cosTheta + B) ;
 
             % Return the total reward
             totalReward = reward;

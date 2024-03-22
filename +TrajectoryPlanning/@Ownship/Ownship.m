@@ -78,12 +78,28 @@ classdef Ownship < handle
         hitCounter;
         Traces = 0;
         reachSet = 0;
-        
+
         % properties to store wind data
         grid_U;
-        grid_V; 
-        X_grid; 
+        grid_V;
+        X_grid;
         Y_grid;
+
+        coefs_u = [ 0.00000000e+00  1.61094414e-10 -7.37058611e-03 -1.48809651e-06...
+            -3.68089481e-13 -7.95141020e-06  2.10701150e-17  9.01146727e-10...
+            1.59724993e-17  6.10108129e-10  7.28957673e-14  8.49416234e-19...
+            7.23116917e-13  4.75030720e-19  1.14705027e-12];
+
+        intercept_u = 10.362042657397877;
+
+        coefs_v = [ 0.00000000e+00 -2.00488263e-10  8.08528198e-03 -7.92842850e-07...
+            4.03295347e-13  3.32875723e-06 -1.06781708e-17 -7.96012216e-11...
+            -1.33310503e-17 -4.23514366e-09  7.95707308e-14 -4.36936906e-19...
+            -5.13247109e-14 -4.72047951e-19 -1.17203841e-12];
+
+        intercept_v = 3.69631689881155;
+
+        degree = 4;
     end
 
     methods(Static)
@@ -117,6 +133,7 @@ classdef Ownship < handle
             rRate = ((Ixx - Iyy)/Izz).*q.*r + (l/Izz).*tauPsi;
             dydt = [xRate; yRate; zRate; xDRate; yDRate; zDRate; phiRate;thetaRate;psiRate;pRate;qRate;rRate ];
         end
+
 
         function [grid_U, grid_V, X_grid, Y_grid] = processWindData(jsonPath, center_lon, center_lat)
             % Load wind data from a JSON file
@@ -183,7 +200,7 @@ classdef Ownship < handle
             for i = 1:numSteps
                 % compute drag forces
                 [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
-                %Dx = 0; Dy = 0; Dz =0; 
+                %Dx = 0; Dy = 0; Dz =0;
 
 
                 % Update the linear speeds [x4 - x6]
@@ -317,9 +334,45 @@ classdef Ownship < handle
         function obj = Ownship(windDataPath,center_lon,center_lat)
             % A constructir method that initializes each aircraft in the game
             obj.aircraftActions = TrajectoryPlanning.Ownship.T18Actions;
-             [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
+            % [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
+        end
+        function [Us, Vs] = calculateWindComponents(obj, xs, ys)
+            % Calculate wind components in MATLAB, correctly handling intercepts.
+
+            % Ensure xs and ys are column vectors
+            xs = xs(:);
+            ys = ys(:);
+
+            % Combine xs and ys into a single matrix of shape (n_samples, n_features)
+            features = [xs, ys];
+
+            % Generate polynomial features
+            polyFeatures = obj.generatePolynomialFeatures(features, obj.degree);
+
+            % Calculate the wind components by dot product, then add the intercept
+            Us = polyFeatures * obj.coefs_u' + obj.intercept_u;
+            Vs = polyFeatures * obj.coefs_v' + obj.intercept_v;
         end
 
+        function polyFeatures = generatePolynomialFeatures(obj, features, degree)
+            % Manually generate polynomial features up to a specified degree for 2D features
+            [n_samples, ~] = size(features);
+
+            % Initialize a list to hold all feature combinations
+            featureList = {ones(n_samples, 1)}; % Start with the bias (intercept) term
+
+            % Generate feature combinations
+            for d = 1:degree
+                for i = 0:d
+                    j = d - i;
+                    newFeature = (features(:,1).^i) .* (features(:,2).^j);
+                    featureList{end+1} = newFeature;
+                end
+            end
+
+            % Combine all features into a single matrix
+            polyFeatures = horzcat(featureList{:});
+        end
 
         function [Dx, Dy, Dz] = computeDragForces(obj,x,y,z, Vx, Vy, Vz)
             Cd = 1; % drag coefficient
@@ -329,9 +382,7 @@ classdef Ownship < handle
             rho = 1.223; % air density
 
             % Interpolate wind speed components at aircraft position
-            % Interpolate wind speed components at aircraft position
-            Wx = (-9.0565 + 3.5107e-06*x - 3.4781e-06*y)*0.5;
-            Wy = (-5.2024 - 4.6088e-07*x - 3.2683e-06*y)*0.5;
+            [Wx, Wy] = calculateWindComponents(obj, x, y);
 
             Vr_x = Vx - Wx;
             Vr_y = Vy - Wy;

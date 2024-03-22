@@ -1,50 +1,82 @@
 % The main script that runs the whole Matlab code
 clear all; clc
 % experimentName = {'withoutEnergyReward', 'withEnergyReward'};
-experimentName = 'packageEnergyReward';
-energyRewardRate = [0,0.3];% [0,0.1,0.2,0.3,0.4,0.5];
+experimentName = 'Frisco';
+energyRewardRate = [0,0.3];% [0,0.2,0.4,0.6,0.8,1];
+windRewardRate = [0,1];%linspace(10,10,1);
+smoothnessRewardRate = [0,0.1];%[0,0.1,0.2,0.3];%linspace(0.1,0.1,1);
 
-for k = 1:length(energyRewardRate)
-    fullName = strcat(experimentName,'rewardRate',num2str(energyRewardRate(k)));
-    TrajectoryPlanning.planTrajectories(fullName,energyRewardRate(k))
-    EnergyRequirement.generateEnergyRequirement(fullName)
+for i = 1:length(windRewardRate)
+    for k = 1:length(smoothnessRewardRate)
+        fullName = strcat(experimentName,'smoothness',num2str(smoothnessRewardRate(k)),...
+            'wind',num2str(windRewardRate(i)));
+        % TrajectoryPlanning.planTrajectories(fullName,smoothnessRewardRate(k),windRewardRate(i))
+        % EnergyRequirement.generateEnergyRequirement(fullName)
+    end
 end
 
-resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
-withoutEnergyReward = load(fullfile(resultsPath,'packageEnergyRewardrewardRate0fullMissionBatteryParams.mat'));
-withEnergyReward = load(fullfile(resultsPath,'packageEnergyRewardrewardRate0.3fullMissionBatteryParams.mat'));
-
-withoutEnergyReward = withoutEnergyReward.results;
-withEnergyReward = withEnergyReward.results;
 maxPower = 10e6;
+rewardExpts = RewardFunctionExperiment.RewardFunctionExperiments(maxPower);
+rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
+rewardExpts.experimentName = experimentName;
+uav = 1;
 
-for uav = 1:6
-    rewardExpts = RewardFunctionExperiment.RewardFunctionExperiments(maxPower);
-    rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
-    rewardExpts.experimentName = 'rewardExperimentBatteryParams.mat';
-    rewardExpts.plotPowerProfiles(withoutEnergyReward,withEnergyReward,uav)
+% Initialize a cell array to hold all loaded data
+allData = {};
+allNames = {};
+for i = 1:length(windRewardRate)
+    for k = 1:length(smoothnessRewardRate)
+        % if (i==2 && k==2)%(i==1 && k==2) %|| (i==2 && k==1)
+        %     continue
+        % end
+
+        fullName = strcat(rewardExpts.experimentName,'smoothness',num2str(smoothnessRewardRate(k)), ...
+            'wind',num2str(windRewardRate(i)), );
+
+        % Check if the file exists. The function 'exist' returns 2 if the file exists.
+        if exist(fullName, 'file') ~= 2
+            % The file does not exist, so you can continue with your operation here
+            % For example, save a file, plot data, etc.
+            disp(['File ', fullName, ' does not exist, continuing...']);
+            continue
+
+            % Your code to execute when the file does not exist goes here
+        else
+            % File exists
+            disp(['File ', fullName, ' already exists.']);
+        end
+        % Load the data for this configuration
+        loadedData = load(fullfile(rewardExpts.resultsPath,strcat(fullName,'fullMissionBatteryParams.mat')));
+        % Store the loaded data in the cell array
+        allData{end+1} = loadedData;
+        allNames{end+1} = fullName;
+
+    end
 end
 
-% waypoints = rewardExpts.NewconvertTrajectoriesToWaypoints(futureTraj(:,1:5:end,1:3), 10);
-% rewardExpts.plotAllTrajectoryAndWaypoints(futureTraj(:,1:5:end,1:3),waypoints(:,:,:))
+% Now pass all the loaded data for plotting
+% plotPowerProfiles(rewardExpts, allData, allNames, uav)
+
+plotPowerProfilesWithBar(rewardExpts, allData, allNames, uav)
 
 
-% UAV 1: Initial Position = [1000.000000, 0.000000, 1000.000000], Goal Position = [-1000.000000, 0.000000, 1000.000000]
-% UAV 2: Initial Position = [-1000.000000, 0.000000, 1000.000000], Goal Position = [0.000000, 0.000000, 1000.000000]
-% UAV 3: Initial Position = [0.000000, 0.000000, 1000.000000], Goal Position = [-500.000000, -866.025404, 1000.000000]
-% UAV 4: Initial Position = [-500.000000, -866.025404, 1000.000000], Goal Position = [-500.000000, 866.025404, 1000.000000]
-% UAV 5: Initial Position = [-500.000000, 866.025404, 1000.000000], Goal Position = [500.000000, -866.025404, 1000.000000]
-% UAV 6: Initial Position = [500.000000, -866.025404, 1000.000000], Goal Position = [500.000000, 866.025404, 1000.000000]
-% UAV 7: Initial Position = [500.000000, 866.025404, 1000.000000], Goal Position = [1000.000000, 0.000000, 1000.000000]
 
-x1 = xTraj;
-y1 = yTraj;
-z1 = zTraj;
-x2 = xTraj;
-y2 = yTraj;
-z2 = zTraj;
-uav = 1;
-plot3(x1',y1',z1')
-hold on
-plot3(x2',y2',z2')
+
+
+
+left_up = [0.579, -1.690058];
+right_down = [0.577,-1.69];
+left_corner = [ 33.17, -96.83];
+right_corner = [33.05, -96.82];
+
+
+
+
+
+
+
+
+
+
+
 
