@@ -84,8 +84,36 @@ def plot_uav_trajectories_on_wind_contour(directory_path, center_lat, center_lon
     plt.legend()
     plt.show()
  
+def trig_wind_func(x, y):
+    # Parameters for the trigonometric functions
+    a_u = 5
+    b_u = 0.01
+    c_u = 2
+    d_u = 3
+    e_u = 0.05
+    f_u = 0.005
 
-def generate_functional_wind_data_for_area(lower_left, upper_right, num_points=1000):
+    a_v = 3
+    b_v = 0.01
+    c_v = 1.5
+    d_v = 3
+    e_v = 0.05
+    f_v = 0.005
+
+    # Ensure x and y are column vectors
+    x = np.array(x).flatten()
+    y = np.array(y).flatten()
+
+    # Create mesh grid
+    X, Y = np.meshgrid(x, y)
+
+    # Trigonometric functions to generate wind components
+    Wx = a_u * np.sin(b_u * X + c_u) + d_u * np.cos(e_u * Y + f_u)
+    Wy = a_v * np.sin(b_v * Y + c_v) + d_v * np.cos(e_v * X + f_v)
+
+    return Wx, Wy
+
+def generate_functional_wind_data_for_area(lower_left, upper_right, num_points=10000):
     """
     Generates wind data for an area defined by diagonal coordinates using functional relationships.
     
@@ -97,31 +125,51 @@ def generate_functional_wind_data_for_area(lower_left, upper_right, num_points=1
     Returns:
     - List of wind data points with coordinates and wind properties based on a functional relationship.
     """
-    lons = np.linspace(lower_left[0], upper_right[0], int(np.sqrt(num_points)))
-    lats = np.linspace(lower_left[1], upper_right[1], int(np.sqrt(num_points)))
     
-    wind_data = []
-    speed_range = [5,11]
-    direction_range = [0, 250]
-    min_speed, max_speed = speed_range
-    min_direction, max_direction = direction_range
-    for lon in lons:
-        for lat in lats:
-            # Ensure a more uniform distribution across the specified range
-            norm_factor = np.pi / (upper_right[0] - lower_left[0])
-            speed_factor = (np.sin(norm_factor * lon) + 1) / 2  # Normalized to [0, 1]
-            direction_factor = (np.cos(norm_factor * lat) + 1) / 2  # Normalized to [0, 1]
+    lons = np.linspace(lower_left[0], upper_right[0], 500)
+    lats = np.linspace(lower_left[1], upper_right[1], 500)
 
-            wind_speed = min_speed + (max_speed - min_speed) * speed_factor
-            wind_direction = min_direction + (max_direction - min_direction) * direction_factor
-             
-            wind_data.append({
-                "coordinates": [lon, lat],
-                "wind_speed": wind_speed,
-                "wind_direction": wind_direction
-            })
+
     
+    center_lon = (-96.84 + -96.81) / 2
+    center_lat = (33.14 + 33.17) / 2 
+
+    m_lat, m_lon = lat_lon_to_meters(lats, lons, center_lat, center_lon)
+    # Create linearly spaced arrays
+    x = np.linspace(-100, 700, 500)
+    y = np.linspace(-100, 450, 500)
+    
+    lat, lon = meters_to_latlon(x, y, center_lat, center_lon)
+    # Generate mesh grid of longitude and latitude points
+    lat_grid, lon_grid = np.meshgrid(lat, lon)
+    print(len(lat_grid))
+    # Generate wind components using trig_wind_func
+    Wx, Wy = trig_wind_func(x, y)
+
+    wind_data = []
+    speed_range = [5, 11]
+    direction_range = [0, 360]
+    # min_speed, max_speed = speed_range
+    # min_direction, max_direction = direction_range
+
+    for i, lon in enumerate(lon_grid.flatten()):
+        lat = lat_grid.flatten()[i]
+        # print(len(lat))
+
+        wx = Wx.flatten()[i]
+        wy = Wy.flatten()[i]
+
+        wind_speed = np.sqrt(wx**2 + wy**2)
+        wind_direction = (np.degrees(np.arctan2(wy, wx)) + 360) % 360
+
+        wind_data.append({
+            "coordinates": [lon, lat],
+            "wind_speed": wind_speed,
+            "wind_direction": wind_direction
+        })
+
     return wind_data
+
 
 def plot_wind_field_with_contour(file_path, vector_scale=60, subsample_rate=3):
     try:
@@ -148,7 +196,7 @@ def plot_wind_field_with_contour(file_path, vector_scale=60, subsample_rate=3):
             features = np.vstack((m_lons, m_lats)).T  # Shape should be [n_samples, n_features]
 
             # Define the degree of the polynomial fit
-            degree = 4  
+            degree = 4
             # Create a pipeline that creates polynomial features and then fits a linear regression model
             poly_model_u = make_pipeline(PolynomialFeatures(degree), LinearRegression())
             poly_model_v = make_pipeline(PolynomialFeatures(degree), LinearRegression())
@@ -295,6 +343,7 @@ def plot_comparison_and_error(file_path, poly_model_u, poly_model_v, center_lat,
 # Define the smaller area coordinates
 lower_left = [-96.84, 33.14]#[-96.94, 33.06]
 upper_right = [-96.81,33.17]#[-96.76, 33.22]
+''' 
 
 # Generate wind data for the smaller area
 small_area_wind_data = generate_functional_wind_data_for_area(lower_left, upper_right, num_points=1000)
@@ -309,21 +358,23 @@ wind_data_json = {
 }
 
 # Define the path for the new JSON file
-wind_data_path = 'dummy_wind_Frisco.json'
+wind_data_path = 'wind_data_at_0_75km.json'
 
 # Write the generated data to a new JSON file
 with open(wind_data_path, 'w') as file:
     json.dump(wind_data_json, file, indent=4)
+  
+'''  
+frisco_wind_data = 'wind_data_frisco_100m_time2.json'
 
-[poly_model_u, poly_model_v] =  plot_wind_field_with_contour(wind_data_path)
+[poly_model_u, poly_model_v] =  plot_wind_field_with_contour(frisco_wind_data)
 
 center_lon = (-96.84 + -96.81) / 2
 center_lat = (33.14 + 33.17) / 2 
 # plot_uav_trajectories_on_wind_contour(directory_path, center_lat, center_lon)
 
-fitted_params_u = [1.16535633e-05, 5.54729748e-06]
-fitted_params_v =  [-4.96795730e-05,  1.46530271e-05]
-plot_comparison_and_error(wind_data_path, poly_model_u, poly_model_v, center_lat, center_lon)
+
+plot_comparison_and_error(frisco_wind_data, poly_model_u, poly_model_v, center_lat, center_lon)
 directory_path = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults'
 
 plot_uav_trajectories_on_wind_contour(directory_path, center_lat, center_lon)

@@ -115,7 +115,7 @@ def plot_wind_field_with_contour_and_trajectories(file_path, subsample_rate=3, v
                 features = np.vstack((m_lons, m_lats)).T  # Shape should be [n_samples, n_features]
 
                 # Define the degree of the polynomial fit
-                degree = 2  # Example degree, can be adjusted based on the complexity of your data
+                degree = 4  # Example degree, can be adjusted based on the complexity of your data
                 # Create a pipeline that creates polynomial features and then fits a linear regression model
                 poly_model_u = make_pipeline(PolynomialFeatures(degree), LinearRegression())
                 poly_model_v = make_pipeline(PolynomialFeatures(degree), LinearRegression())
@@ -213,7 +213,7 @@ def plot_comparison_and_error(file_path, coefs_u, poly_model_u, coefs_v, poly_mo
     lat_m = np.array(m_lats).reshape(-1, 1)
     long_m = np.array(m_lons).reshape(-1, 1)
     
-    degree = 2
+    degree = 4
     [U_pred,V_pred] = calculate_wind_components(poly_model_u, poly_model_v, long_m, lat_m, degree)
     # print((lat_m))
  

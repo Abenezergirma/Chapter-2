@@ -1,73 +1,109 @@
 % The main script that runs the whole Matlab code
 clear all; clc
 % experimentName = {'withoutEnergyReward', 'withEnergyReward'};
-experimentName = 'Frisco';
-energyRewardRate = [0,0.3];% [0,0.2,0.4,0.6,0.8,1];
-windRewardRate = [0,1];%linspace(10,10,1);
-smoothnessRewardRate = [0,0.1];%[0,0.1,0.2,0.3];%linspace(0.1,0.1,1);
+experimentName = 'Journal';
 
-for i = 1:length(windRewardRate)
-    for k = 1:length(smoothnessRewardRate)
-        fullName = strcat(experimentName,'smoothness',num2str(smoothnessRewardRate(k)),...
-            'wind',num2str(windRewardRate(i)));
-        TrajectoryPlanning.planTrajectories(fullName,smoothnessRewardRate(k),windRewardRate(i))
-        EnergyRequirement.generateEnergyRequirement(fullName)
-    end
+% Define the ranges for each weight factor
+w_main_range = [1.0];
+w_wind_range = [0.0, 0.5, 1];
+w_energy_range = [0.0, 0.5, 1];
+w_path_range = [0.0];
+w_deviation_range = [0, 0.5, 1];%[0,0.1, 0.2, 0.3];
+
+% Loop through all combinations of the weight factors
+for wm = 1:length(w_main_range)
+    for ww = 1:length(w_wind_range)
+        for we = 1:length(w_energy_range)
+            for wp = 1:length(w_path_range)
+                for wd = 1:length(w_deviation_range)
+                    % Create the experiment name based on the weight factors
+                    fullName = strcat(experimentName, ...
+                        '_main', num2str(w_main_range(wm)), ...
+                        '_wind', num2str(w_wind_range(ww)), ...
+                        '_energy', num2str(w_energy_range(we)), ...
+                        '_path', num2str(w_path_range(wp)), ...
+                        '_deviation', num2str(w_deviation_range(wd)));
+
+                    % Call the trajectory planning function with the current weights
+                    TrajectoryPlanning.planTrajectories(fullName, ...
+                        w_main_range(wm), ...
+                        w_wind_range(ww), ...
+                        w_energy_range(we), ...
+                        w_path_range(wp), ...
+                        w_deviation_range(wd));
+
+                    % Call the energy requirement function with error handling
+                    try
+                        % Only run the energy requirement experiment
+                        EnergyRequirement.generateEnergyRequirement(fullName);
+                    catch ME
+                        % Handle the error gracefully and continue
+                        fprintf('Error in EnergyRequirement.generateEnergyRequirement for %s: %s\n', fullName, ME.message);
+                        cd('/home/abenezertaye/Desktop/Research/Codes/Chapter-2');
+                        continue;  % Continue to the next set of experiments
+                    end
+                end
+            end
+        end
+   end
 end
 
+
+%%
 maxPower = 10e6;
 rewardExpts = RewardFunctionExperiment.RewardFunctionExperiments(maxPower);
 rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
 rewardExpts.experimentName = experimentName;
-uav = 1;
+uav = 2; 
 
-% Initialize a cell array to hold all loaded data
+% Initialize a cell array to hold all loaded data and names
 allData = {};
 allNames = {};
-for i = 1:length(windRewardRate)
-    for k = 1:length(smoothnessRewardRate)
-        % if (i==2 && k==2)%(i==1 && k==2) %|| (i==2 && k==1)
-        %     continue
-        % end
 
-        fullName = strcat(rewardExpts.experimentName,'smoothness',num2str(smoothnessRewardRate(k)), ...
-            'wind',num2str(windRewardRate(i)), 'fullMissionBatteryParams.mat');
+% Loop through all combinations of the weight factors
+for wm = 1:length(w_main_range)
+    for ww = 1:length(w_wind_range)
+        for we = 1:length(w_energy_range)
+            for wp = 1:length(w_path_range)
+                for wd = 1:length(w_deviation_range)
+                    % Construct the full file name based on the weight factors
+                    fullName = strcat(rewardExpts.experimentName, ...
+                        '_main', num2str(w_main_range(wm)), ...
+                        '_wind', num2str(w_wind_range(ww)), ...
+                        '_energy', num2str(w_energy_range(we)), ...
+                        '_path', num2str(w_path_range(wp)), ...
+                        '_deviation', num2str(w_deviation_range(wd)), ...
+                        'fullMissionBatteryParams.mat');
 
-        % Check if the file exists. The function 'exist' returns 2 if the file exists.
-        if exist(fullfile(rewardExpts.resultsPath,fullName), 'file') ~= 2
-            % The file does not exist, so you can continue with your operation here
-            disp(['File ', fullName, ' does not exist, continuing...']);
-            continue
+                    % Check if the file exists
+                    if exist(fullfile(rewardExpts.resultsPath, fullName), 'file') ~= 2
+                        % The file does not exist, skip to the next iteration
+                        disp(['File ', fullName, ' does not exist, continuing...']);
+                        continue;
+                    else
+                        % File exists
+                        disp(['File ', fullName, ' already exists.']);
+                    end
 
-            % Your code to execute when the file does not exist goes here
-        else
-            % File exists
-            disp(['File ', fullName, ' already exists.']);
+                    % Load the data for this configuration
+                    loadedData = load(fullfile(rewardExpts.resultsPath, fullName));
+
+                    % Store the loaded data and name in the cell arrays
+                    allData{end+1} = loadedData;
+                    allNames{end+1} = strcat(rewardExpts.experimentName, ...
+                        'main', num2str(w_main_range(wm)), ...
+                        'wind', num2str(w_wind_range(ww)), ...
+                        'energy', num2str(w_energy_range(we)), ...
+                        'path', num2str(w_path_range(wp)), ...
+                        'deviation', num2str(w_deviation_range(wd)));
+
+                end
+            end
         end
-        % Load the data for this configuration
-        loadedData = load(fullfile(rewardExpts.resultsPath,fullName));
-        % Store the loaded data in the cell array
-        allData{end+1} = loadedData;
-        allNames{end+1} = strcat(rewardExpts.experimentName,'smoothness',num2str(smoothnessRewardRate(k)), ...
-            'wind',num2str(windRewardRate(i)));
-
     end
 end
 
-% Now pass all the loaded data for plotting
-% plotPowerProfiles(rewardExpts, allData, allNames, uav)
-
-plotPowerProfilesWithBar(rewardExpts, allData, allNames, uav)
-
-
-
-
-
-
-left_up = [0.579, -1.690058];
-right_down = [0.577,-1.69];
-left_corner = [ 33.17, -96.83];
-right_corner = [33.05, -96.82];
+rewardExpts.plotPowerProfilesWithBar(allData, allNames, uav)
 
 
 

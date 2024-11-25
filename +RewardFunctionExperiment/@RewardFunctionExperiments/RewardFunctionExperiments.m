@@ -1,8 +1,8 @@
-classdef RewardFunctionExperiments
+classdef RewardFunctionExperiments %< TrajectoryPlanning.Ownship & EnergyRequirement.SimulinkUAVWrapper
     properties
         % Use the concept of composition to import the two vehicle models
         % lowFidelityModel  = TrajectoryPlanning.Ownship(); % Low-fidelity UAV model
-        timeStep = 0.1;
+        % timeStep = 0.1;
 
         highFidelityModelPath
         highFidelityModelRunner
@@ -17,6 +17,9 @@ classdef RewardFunctionExperiments
     methods
         function obj = RewardFunctionExperiments(maxTotalPower)
             % Constructor for the class
+            % obj@TrajectoryPlanning.Ownship(windDataPath);
+            % obj@EnergyRequirement.SimulinkUAVWrapper(modelPath)
+
             obj.maxTotalPower = maxTotalPower;
         end
 
@@ -521,7 +524,7 @@ classdef RewardFunctionExperiments
 
                 color = myColors(iPlot, :);
                 lineStyle = lineStyles{mod(iPlot-1, numStyles) + 1};
-                plot(timeb, energyProfile, 'LineWidth', 2, 'DisplayName', fullName, 'Color', color, 'LineStyle', lineStyle);
+                plot(timeb, powerProfile, 'LineWidth', 2, 'DisplayName', fullName, 'Color', color, 'LineStyle', lineStyle);
             end
 
             xlabel('Time (s)');

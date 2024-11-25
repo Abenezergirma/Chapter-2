@@ -1,4 +1,4 @@
-classdef Ownship < handle
+classdef Ownship < TrajectoryPlanning.WindInterpolator
     %This class implements a point-mass dynamic model of T18 UAV aircraft
     %The model is adopted from Corbetta, M., Banerjee, P., Okolo, W.,
     % Gorospe, G., and Luchinsky, D. G., “Real-time uav trajectory prediction
@@ -47,6 +47,7 @@ classdef Ownship < handle
         p = zeros(1,1);
         q = zeros(1,1);
         r = zeros(1,1);
+        yaw = zeros(1,1);
 
         position = zeros(1,3);
         velocity = zeros(1,3);
@@ -79,27 +80,6 @@ classdef Ownship < handle
         Traces = 0;
         reachSet = 0;
 
-        % properties to store wind data
-        grid_U;
-        grid_V;
-        X_grid;
-        Y_grid;
-
-        coefs_u = [ 0.00000000e+00  1.61094414e-10 -7.37058611e-03 -1.48809651e-06...
-            -3.68089481e-13 -7.95141020e-06  2.10701150e-17  9.01146727e-10...
-            1.59724993e-17  6.10108129e-10  7.28957673e-14  8.49416234e-19...
-            7.23116917e-13  4.75030720e-19  1.14705027e-12];
-
-        intercept_u = 10.362042657397877;
-
-        coefs_v = [ 0.00000000e+00 -2.00488263e-10  8.08528198e-03 -7.92842850e-07...
-            4.03295347e-13  3.32875723e-06 -1.06781708e-17 -7.96012216e-11...
-            -1.33310503e-17 -4.23514366e-09  7.95707308e-14 -4.36936906e-19...
-            -5.13247109e-14 -4.72047951e-19 -1.17203841e-12];
-
-        intercept_v = 3.69631689881155;
-
-        degree = 4;
     end
 
     methods(Static)
@@ -135,61 +115,48 @@ classdef Ownship < handle
         end
 
 
-        function [grid_U, grid_V, X_grid, Y_grid] = processWindData(jsonPath, center_lon, center_lat)
-            % Load wind data from a JSON file
-            data = jsondecode(fileread(jsonPath));
-
-            % Earth's radius in meters
-            R = 6371000;
-
-            % Assume wind_data contains fields for coordinates, wind_speed, and wind_direction
-            wind_data = data.wind_data;
-
-            % Extract longitude, latitude, wind speed, and direction
-            longitudes = cellfun(@(c) c(1), {wind_data.coordinates});
-            latitudes = cellfun(@(c) c(2), {wind_data.coordinates});
-            wind_speeds = [wind_data.wind_speed];
-            wind_directions = [wind_data.wind_direction]; % Assuming this is in degrees from north
-
-            % Convert differences in latitudes and longitudes from degrees to meters
-            delta_lon_m = (longitudes - center_lon) .* cosd(center_lat) * (pi * R / 180);
-            delta_lat_m = (latitudes - center_lat) * (pi * R / 180);
-
-            % Convert wind speed and direction into north and east components
-            U = wind_speeds .* cosd(wind_directions); % North component
-            V = wind_speeds .* sind(wind_directions); % East component
-
-            % Create grid for interpolation
-            x_range = linspace(min(delta_lon_m), max(delta_lon_m), 100);
-            y_range = linspace(min(delta_lat_m), max(delta_lat_m), 100);
-            [X_grid, Y_grid] = meshgrid(x_range, y_range);
-
-            % Interpolate U and V components onto the grid
-            grid_U = griddata(delta_lon_m, delta_lat_m, U, X_grid, Y_grid, 'linear');
-            grid_V = griddata(delta_lon_m, delta_lat_m, V, X_grid, Y_grid, 'linear');
-
-            % The function returns the gridded U and V components, along with the grid coordinates
-        end
-
-
         function futureTraj = OctocopterModelWind(ownship, actions, timestep, numSteps)
             % A function that returns a set of next states with state constraints
             % and wind effect applied
             % This model assumes the wind acceleration is zero (wx_dot,wy_dot,wz_dot = 0)
             Ixx = 0.2506;
             Iyy = 0.2506;
-            Izz = 0.4538; %
+            Izz = 0.2506*4; %
             l = 0.635; % arm length
-            mt = 2.66; % total mass of the UAV
+            mt = 12.66; % total mass of the UAV
             g = 9.81;
 
             % Extract state variables
             currentState = ownship.currentStates;
+            
+            deltaX = ownship.goal(1) - currentState(1);
+            deltaY = ownship.goal(2) - currentState(2);
+            % Calculate the yaw angle
 
-            [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r] = deal(currentState(:,1), ...
-                currentState(:,2),currentState(:,3),currentState(:,4),currentState(:,5), ...
-                currentState(:,6),currentState(:,7),currentState(:,8),currentState(:,9), ...
-                currentState(:,10),currentState(:,11),currentState(:,12));
+            yaw = atan2(deltaY ,deltaX); 
+            % hold on;
+            % 
+            % plot(currentState(1), currentState(2), 'bo', 'MarkerSize', 10, 'DisplayName', 'Initial Locations');
+            % plot(ownship.goal(1),ownship.goal(2), 'rx', 'MarkerSize', 10, 'DisplayName', 'Goal Locations');
+            % hold on
+            % quiver(currentState(1), currentState(2), cos(yaw), sin(yaw), 3.3, 'k', 'LineWidth', 2, 'MaxHeadSize', 2, 'DisplayName', 'Yaw Direction');
+
+            [x, y, z, xDot,yDot,zDot, phi, theta, psi, p, q, r] = deal(currentState(:,1), ...
+                currentState(:,2),currentState(:,3),min(max(currentState(:,4), -3), 3),...
+                min(max(currentState(:,5),-3),3),min(max(currentState(:,6),-2.5),2.5),...
+                min(max(currentState(:,7), deg2rad(-35)), deg2rad(35)), ...
+                min(max(currentState(:,8), deg2rad(-35)), deg2rad(35)), ...
+                yaw,0,0,0); 
+
+            % %Pre-compute trig values
+            % sTheta = sin(theta);
+            % cTheta = cos(theta);
+            % tTheta = tan(theta + 0.0001);
+            % sPsi = sin(psi);
+            % cPsi = cos(psi);
+            % sPhi = sin(phi);
+            % cPhi = cos(phi);
+            % 
 
             % Extract control variables
             [T, tauTheta, tauPhi, tauPsi] = deal(actions(:,1), actions(:,2), actions(:,3), actions(:,4));
@@ -199,17 +166,42 @@ classdef Ownship < handle
 
             for i = 1:numSteps
                 % compute drag forces
-                [Dx, Dy, Dz] = ownship.computeDragForces(x,y,z,xDot,yDot,zDot);
-                %Dx = 0; Dy = 0; Dz =0;
+                % Dx = max(min(Dx, 15), -15);
+                % Dy = max(min(Dy, 15), -15);
+                % Dz = max(min(Dz, 15), -15);
+                % Dx = 0; Dy = 0; Dz =0;
+
+                %Pre-compute trig values
+                sTheta = sin(theta);
+                cTheta = cos(theta);
+                tTheta = tan(theta + 0.0001);
+                sPsi = sin(psi);
+                cPsi = cos(psi);
+                sPhi = sin(phi);
+                cPhi = cos(phi);
+
+                % vBody = ownship.rot_eart2body_fast_vectorized(sPhi, cPhi, sTheta, cTheta, sPsi, cPsi)*[xDot,yDot,zDot]';
+
+                bodyVel = ownship.transform_velocity_to_body_frame(sPhi, cPhi, sTheta, cTheta, sPsi, cPsi, xDot, yDot, zDot);
+
+                [wX, wY] = ownship.get_wind_at(x, y);
+                wZ = zeros(length(wX),1);
+                wBody = ownship.transform_velocity_to_body_frame(sPhi, cPhi, sTheta, cTheta, sPsi, cPsi,wX, wY, wZ);
+
+                vAir = bodyVel - wBody;
+                [Dx_body, Dy_body, Dz_body] = ownship.computeDragForces(x,y,z,vAir(:,1),vAir(:,2),vAir(:,3));
+
+                dragForces= ownship.transform_velocity_to_earth_frame(sPhi, cPhi, sTheta, cTheta, sPsi, cPsi,Dx_body, Dy_body, Dz_body);
+                [Dx, Dy, Dz] = deal(dragForces(:,1), dragForces(:,2), dragForces(:,3));
 
 
                 % Update the linear speeds [x4 - x6]
-                xDot = xDot + timestep.*((sin(theta).*cos(psi).*cos(phi) + sin(phi).*sin(psi)).*T/mt - Dx/mt);
-                xDot = min( max(xDot, -10), 10);
-                yDot = yDot + timestep.*((sin(theta).*sin(psi).*cos(phi) - sin(phi).*sin(psi)).*T/mt - Dy/mt);
-                yDot = min( max(yDot, -10), 10);
-                zDot = zDot + timestep.*((-g + (cos(psi).*cos(theta)).*T/mt) - Dz/mt);
-                zDot = min( max(zDot, -5), 5);
+                xDot = xDot + timestep.*((sTheta.*cPsi.*cPhi + sPhi.*sPsi).*T/mt - Dx/mt);
+                xDot = min( max(xDot, -9.5), 9.5);
+                yDot = yDot + timestep.*((sTheta.*sPsi.*cPhi - sPhi.*sPsi).*T/mt - Dy/mt);
+                yDot = min( max(yDot, -9.5), 9.5);
+                zDot = zDot + timestep.*((-g + (cPhi.*cTheta).*T/mt) - Dz/mt);
+                zDot = min( max(zDot, -9.5), 9.5);
 
                 % Update the linear positions [x1 - x3]
                 x = x + xDot.*timestep;
@@ -218,24 +210,32 @@ classdef Ownship < handle
 
                 % Update the angular speeds [x10 - x12]
                 p = p + timestep.*(((Iyy - Izz)/Ixx).*q.*r + (l/Ixx).*tauPhi);
-                p =   min( max(p, deg2rad(-100)), deg2rad(100));
+                p =  min( max(p, deg2rad(-45)), deg2rad(45));
 
                 q = q + timestep.*(((Izz - Ixx)/Iyy).*p.*r + (l/Iyy).*tauTheta);
-                q =  min( max(q, deg2rad(-100)), deg2rad(100));
+                q =  min( max(q, deg2rad(-45)), deg2rad(45));
 
-                r = r + timestep.*(((Ixx - Iyy)/Izz).*q.*r + (l/Izz).*tauPsi);
-                r =  min( max(r, deg2rad(-200)), deg2rad(200));
+                r = r + timestep.*(((Ixx - Iyy)/Izz).*q.*r + (1/Izz).*tauPsi);
+                r =  min( max(r, deg2rad(-45)), deg2rad(45));
 
                 % Update the angular pos [x7 - x9]
-                phi = phi + timestep.*(p + q.*sin(phi).*tan(theta+0.1) + r.*cos(phi).*tan(theta+0.1));
+                phi = phi + timestep.*(p + q.*sPhi.*tTheta + r.*cPhi.*tTheta);
                 phi =min( max(phi, deg2rad(-45)), deg2rad(45));%wrapTo2Pi(phi);%
 
-                theta = theta + timestep.*(q.*cos(phi) - r.*sin(phi));
+                theta = theta + timestep.*(q.*cPhi - r.*sPhi);
                 theta = min( max(theta, deg2rad(-45)), deg2rad(45));
 
-                psi = psi + timestep.*(q.*(sin(phi)./cos(theta)) + r.*(cos(phi)./cos(theta)));
-                psi = wrapTo2Pi(psi);% min( max(psi, -pi), pi);
+                psi = psi + timestep.*(q.*(sPhi./cTheta) + r.*(cPhi./cTheta));
+                psi =  min( max(psi, yaw + deg2rad(-20)), yaw + deg2rad(20));
 
+                % R = ownship.rot_body2earth_fast_vectorized(sPhi, cPhi, sTheta, cTheta, sPsi, cPsi);
+                % 
+                % % Ensure that the velocity matrix is 4608x3
+                % vel = [xDot, yDot, zDot];  % Shape should be 4608x3
+
+                % v_ground = ownship.multiply_rotation_and_velocity(R, vel);
+
+               
                 nextState = [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r];
 
                 % Store the states into an array
@@ -243,81 +243,18 @@ classdef Ownship < handle
             end
         end
 
-
-        function futureTraj = discreteOctocopterModel(ownship, actions, timestep, numSteps)
-            % A function that returns a set of next states with state constraints
-            % applied
-            %
-            Ixx = 0.2506;
-            Iyy = 0.2506;
-            Izz = 0.4538; %
-            l = 0.635; % arm length
-            mt = 2.66; % total mass of the UAV
-            g = 9.81;
-
-            % Extract state variables
-            currentState = ownship.currentStates;
-
-            [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r] = deal(currentState(:,1), ...
-                currentState(:,2),currentState(:,3),currentState(:,4),currentState(:,5), ...
-                currentState(:,6),currentState(:,7),currentState(:,8),currentState(:,9), ...
-                currentState(:,10),currentState(:,11),currentState(:,12));
-
-            % Extract control variables
-            [T, tauTheta, tauPhi, tauPsi] = deal(actions(:,1), actions(:,2), actions(:,3), actions(:,4));
-
-            % Preallocate memory for speed
-            futureTraj = zeros(numSteps, length(actions(:,1)), length(currentState(1,:))); %Preallocated memory for speed
-
-            for i = 1:numSteps
-                % Update the linear speeds [x4 - x6]
-                xDot = xDot + timestep.*(sin(theta).*cos(psi).*cos(phi) + sin(phi).*sin(psi)).*T/mt;
-                xDot = min( max(xDot, -10), 10);
-                yDot = yDot + timestep.*(sin(theta).*sin(psi).*cos(phi) - sin(phi).*sin(psi)).*T/mt;
-                yDot = min( max(yDot, -10), 10);
-                zDot = zDot + timestep.*(-g + (cos(psi).*cos(theta)).*T/mt);
-                zDot = min( max(zDot, -5), 5);
-
-                % Update the linear positions [x1 - x3]
-                x = x + xDot.*timestep;
-                y = y + yDot.*timestep;
-                z = z + zDot.*timestep;
-
-                % Update the angular speeds [x10 - x12]
-                p = p + timestep.*(((Iyy - Izz)/Ixx).*q.*r + (l/Ixx).*tauPhi);
-                p =   min( max(p, deg2rad(-100)), deg2rad(100));
-
-                q = q + timestep.*(((Izz - Ixx)/Iyy).*p.*r + (l/Iyy).*tauTheta);
-                q =  min( max(q, deg2rad(-100)), deg2rad(100));
-
-                r = r + timestep.*(((Ixx - Iyy)/Izz).*q.*r + (l/Izz).*tauPsi);
-                r =  min( max(r, deg2rad(-200)), deg2rad(200));
-
-                % Update the angular pos [x7 - x9]
-                phi = phi + timestep.*(p + q.*sin(phi).*tan(theta+0.1) + r.*cos(phi).*tan(theta+0.1));
-                phi =min( max(phi, deg2rad(-45)), deg2rad(45));%wrapTo2Pi(phi);%
-
-                theta = theta + timestep.*(q.*cos(phi) - r.*sin(phi));
-                theta = min( max(theta, deg2rad(-45)), deg2rad(45));
-
-                psi = psi + timestep.*(q.*(sin(phi)./cos(theta)) + r.*(cos(phi)./cos(theta)));
-                psi = wrapTo2Pi(psi);% min( max(psi, -pi), pi);
-
-                nextState = [x, y, z, xDot, yDot, zDot, phi, theta, psi, p, q, r];
-
-                % Store the states into an array
-                futureTraj(i,:,:) = nextState;
-            end
-        end
 
         function T18Actions = T18Actions(varargin)
             % Builds an array that stores the action space of each team
-            Thrust  = 10.^[linspace(0, log10(100), 5),linspace(log10(120), log10(200), 5)]; %0:25*1:200;
+            Thrust  = linspace(50,600,9); %10.^[linspace(0, log10(300), 5),linspace(log10(400), log10(700), 5)]; %0:25*1:200;
             % tauTheta = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
             % tauPhi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
             % tauPsi = [-10.^linspace(0,log10(100), 5),10.^linspace(log10(10), log10(100), 5)];%-100:25*1:100;
             % tauTheta = [-100.0000 -56.2341  -31.6228  -17.7828 -10.0000 0 10.0000   17.7828   31.6228   56.2341  100.0000];
-            tauTheta = [-56.2341  -31.6228  -17.7828  0   17.7828   31.6228   56.2341 ];
+            % tauTheta = [-180.2341  -100.6228  -50.7828  0   50.7828   100.6228   180.2341 ];
+            tauTheta = linspace(-150,150,7);
+            % tauTheta = [-56.2341  -31.6228  -17.7828  0   17.7828   31.6228   56.2341 ];
+
 
             tauPhi = tauTheta;
             tauPsi = tauTheta;
@@ -331,50 +268,105 @@ classdef Ownship < handle
     end
 
     methods
-        function obj = Ownship(windDataPath,center_lon,center_lat)
+        function obj = Ownship(windDataPath)
             % A constructir method that initializes each aircraft in the game
+            load(windDataPath, 'x', 'y', 'x_velocity', 'y_velocity');
+            x_data = x;
+            y_data = y;
+            wx_data = x_velocity;
+            wy_data = y_velocity;
+            obj@TrajectoryPlanning.WindInterpolator(x_data, y_data, wx_data, wy_data);
             obj.aircraftActions = TrajectoryPlanning.Ownship.T18Actions;
-            % [obj.grid_U, obj.grid_V, obj.X_grid, obj.Y_grid] = TrajectoryPlanning.Ownship.processWindData(windDataPath,center_lon,center_lat);
-        end
-        function [Us, Vs] = calculateWindComponents(obj, xs, ys)
-            % Calculate wind components in MATLAB, correctly handling intercepts.
-
-            % Ensure xs and ys are column vectors
-            xs = xs(:);
-            ys = ys(:);
-
-            % Combine xs and ys into a single matrix of shape (n_samples, n_features)
-            features = [xs, ys];
-
-            % Generate polynomial features
-            polyFeatures = obj.generatePolynomialFeatures(features, obj.degree);
-
-            % Calculate the wind components by dot product, then add the intercept
-            Us = polyFeatures * obj.coefs_u' + obj.intercept_u;
-            Vs = polyFeatures * obj.coefs_v' + obj.intercept_v;
         end
 
-        function polyFeatures = generatePolynomialFeatures(obj, features, degree)
-            % Manually generate polynomial features up to a specified degree for 2D features
-            [n_samples, ~] = size(features);
 
-            % Initialize a list to hold all feature combinations
-            featureList = {ones(n_samples, 1)}; % Start with the bias (intercept) term
+        function R = rot_body2earth_fast_vectorized(obj, sphi, cphi, stheta, ctheta, spsi, cpsi)
+            % Vectorized computation of rotation matrices to transform coordinates from
+            % the body frame to the Earth-fixed (inertial) frame for multiple angles.
+            %
+            % Input: All inputs are vectors of size Nx1 (sine and cosine of roll, pitch, and yaw)
+            % Output: R is a 3x3xN array where each slice is a rotation matrix
 
-            % Generate feature combinations
-            for d = 1:degree
-                for i = 0:d
-                    j = d - i;
-                    newFeature = (features(:,1).^i) .* (features(:,2).^j);
-                    featureList{end+1} = newFeature;
-                end
-            end
+            n = length(sphi);  % Number of trajectories
+            R = zeros(3, 3, n);  % Preallocate for the 3x3xN result
 
-            % Combine all features into a single matrix
-            polyFeatures = horzcat(featureList{:});
+            % Compute each element of the rotation matrix in a vectorized way
+            R(1, 1, :) = cpsi .* ctheta;
+            R(1, 2, :) = cpsi .* stheta .* sphi - spsi .* cphi;
+            R(1, 3, :) = cpsi .* stheta .* cphi + spsi .* sphi;
+
+            R(2, 1, :) = spsi .* ctheta;
+            R(2, 2, :) = spsi .* stheta .* sphi + cpsi .* cphi;
+            R(2, 3, :) = spsi .* stheta .* cphi - cpsi .* sphi;
+
+            R(3, 1, :) = -stheta;
+            R(3, 2, :) = ctheta .* sphi;
+            R(3, 3, :) = ctheta .* cphi;
         end
+
+
+        function R = rot_eart2body_fast_vectorized(obj, sphi, cphi, stheta, ctheta, spsi, cpsi)
+            % Vectorized computation of rotation matrices to transform coordinates from
+            % the Earth-fixed (inertial) frame to the body frame for multiple angles.
+            %
+            % Input: All inputs are vectors of size Nx1 (sine and cosine of roll, pitch, and yaw)
+            % Output: R is a 3x3xN array where each slice is a rotation matrix
+
+            n = length(sphi);  % Number of trajectories
+            R = zeros(3, 3, n);  % Preallocate for the 3x3xN result
+
+            % Compute each element of the rotation matrix in a vectorized way
+            R(1, 1, :) = ctheta .* cpsi;
+            R(1, 2, :) = ctheta .* spsi;
+            R(1, 3, :) = -stheta;
+
+            R(2, 1, :) = -cphi .* spsi + sphi .* stheta .* cpsi;
+            R(2, 2, :) = cphi .* cpsi + sphi .* stheta .* spsi;
+            R(2, 3, :) = sphi .* ctheta;
+
+            R(3, 1, :) = sphi .* spsi + cphi .* stheta .* cpsi;
+            R(3, 2, :) = -sphi .* cpsi + cphi .* stheta .* spsi;
+            R(3, 3, :) = cphi .* ctheta;
+        end
+
+
+
+        function bodyVel = transform_velocity_to_body_frame(obj, sphi, cphi, stheta, ctheta, spsi, cpsi, xDot, yDot, zDot)
+            % Compute the rotation matrices using the vectorized function (3x3xN)
+            R = rot_eart2body_fast_vectorized(obj, sphi, cphi, stheta, ctheta, spsi, cpsi);
+
+            % Stack the velocity components into a 3x1xN array (for multiple trajectories)
+            V_inertial = [xDot'; yDot'; zDot'];  % 3xN array
+            V_inertial = reshape(V_inertial, 3, 1, []);  % Reshape to 3x1xN
+
+            % Perform matrix multiplication between 3x3xN rotation matrices and 3x1xN velocity vectors
+            bodyVel = pagemtimes(R, V_inertial);  % Result will be 3x1xN
+
+            % Reshape bodyVel to 3xN and then transpose it to Nx3
+            bodyVel = squeeze(bodyVel);  % Remove the singleton dimension
+            bodyVel = bodyVel';  % Transpose to get Nx3
+
+        end
+
+        function earthVel = transform_velocity_to_earth_frame(obj, sphi, cphi, stheta, ctheta, spsi, cpsi, xDot, yDot, zDot)
+            % Compute the rotation matrices using the vectorized function (3x3xN)
+            R = rot_body2earth_fast_vectorized(obj, sphi, cphi, stheta, ctheta, spsi, cpsi);
+
+            % Stack the velocity components into a 3x1xN array (for multiple trajectories)
+            V_body = [xDot'; yDot'; zDot'];  % 3xN array
+            V_body = reshape(V_body, 3, 1, []);  % Reshape to 3x1xN
+
+            % Perform matrix multiplication between 3x3xN rotation matrices and 3x1xN velocity vectors
+            earthVel = pagemtimes(R, V_body);  % Result will be 3x1xN
+
+            % Reshape earthVel to 3xN and then transpose it to Nx3
+            earthVel = squeeze(earthVel);  % Remove the singleton dimension
+            earthVel = earthVel';  % Transpose to get Nx3
+        end
+
 
         function [Dx, Dy, Dz] = computeDragForces(obj,x,y,z, Vx, Vy, Vz)
+
             Cd = 1; % drag coefficient
             Axy = 0.403; % apparent face of the vehicle
             Ayx = 0.403;
@@ -382,14 +374,17 @@ classdef Ownship < handle
             rho = 1.223; % air density
 
             % Interpolate wind speed components at aircraft position
-            [Wx, Wy] = calculateWindComponents(obj, x, y);
+            % [Wx, Wy] = calculateWindComponents(obj, x, y);
+            % tic
+            % [Wx, Wy] = obj.get_wind_at(x, y);
+            % toc
 
-            Vr_x = Vx - Wx;
-            Vr_y = Vy - Wy;
-            Vr_z = 0;
-            Dx = -(1/2) * Cd * Axy * Vr_x .* abs(Vr_x);
-            Dy = -(1/2) * Cd * Ayx * Vr_y .* abs(Vr_y);
-            Dz = -(1/2) * Cd * Ayz * Vr_z .* abs(Vr_z);
+            % Vr_x = Vx - Wx;
+            % Vr_y = Vy - Wy;
+            % Vr_z = 0;
+            Dx = (1/2) * Cd * Axy * Vx .* abs(Vx);
+            Dy = (1/2) * Cd * Ayx * Vy .* abs(Vy);
+            Dz = (1/2) * Cd * Ayz * Vz .* abs(Vz);
         end
 
         function [obj] = updateAircraftStates(obj,  currentStates)
@@ -432,7 +427,7 @@ classdef Ownship < handle
             % bestActions = futureActions(bestRow(1),bestColumn(1),:);
 
             % select the best next state
-            bestStep = oneStepStates(bestRow(randomIndexRow), bestColumn(randomIndexCol),:);
+            bestStep = squeeze(oneStepStates(bestRow(randomIndexRow), bestColumn(randomIndexCol),:));
 
             %select the best future trajectory for the next 10 sec
             bestTraj = squeeze(futureStates(:, bestColumn(randomIndexCol),1:3)) ;
@@ -445,6 +440,7 @@ classdef Ownship < handle
             obj.traveledPath = [obj.traveledPath; obj.nextStates];
             obj.pastControls = [obj.pastControls; obj.controlActions];
             obj.bestTrajectory = [obj.bestTrajectory; bestTraj];
+            % obj.bestTrajectory = [obj.bestTrajectory; obj.nextStates(1:3)];
             %             obj.values = [obj.values;totalValues];
             obj.bestVal = [obj.bestVal;bestValue];
 

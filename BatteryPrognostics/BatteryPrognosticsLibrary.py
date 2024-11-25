@@ -13,6 +13,7 @@ from progpy import predictors
 from progpy.metrics import prob_success
 from battery_electrochem_TarotT18 import BatteryElectroChemEOD as Battery
 
+
 class BatteryPrognostics:
     """
     A class for battery prognostics using advanced algorithms and models.
@@ -79,9 +80,9 @@ class BatteryPrognostics:
         # Return initialized battery and initial state
         
         # Add Process and Measurement noises
-        R_vars = {"t": 12.2, "v": 15.46}
-        battery = Battery(measurement_noise=R_vars)
-        initial_state = battery.parameters["x0"]
+        R_vars = {"t": 2.2, "v": 1.46}
+        battery = Battery(process_noise = 0.25, process_noise_dist = 'normal', measurement_noise=R_vars, measurement_noise_dist = 'normal')
+        initial_state = battery.initialize()#battery.parameters["x0"]
         battery.parameters["VEOD"] = self.VEOD  # put the user defined VEOD here
         INITIAL_UNCERT = 30  # Uncertainty in initial state (%)
         
@@ -108,9 +109,9 @@ class BatteryPrognostics:
         print("\tSOC: ", self.battery.event_state(filter.x.mean)["EOD"])
        
         # Step 2c: Perform state estimation step
-        example_measurements = {"t": 292.2, "v": 25.1}
+        example_measurements = {"t": 292.2, "v": 25.0}
         
-        print("Current of batt = ", self.tarrot_loading(self.sample_time))
+        # print("Current of batt = ", self.tarrot_loading(self.sample_time))
         filter.estimate(self.sample_time, self.tarrot_loading(self.sample_time), example_measurements)
         return filter
 

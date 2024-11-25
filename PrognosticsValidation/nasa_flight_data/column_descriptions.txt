@@ -1,0 +1,419 @@
+timeus: microseconds since system startup (us)
+
+BARO: Gathered Barometer data
+alt: calculated altitude (m)
+press: measured atmospheric pressure (Pa)
+temp: measured atmospheric temperature (degC)
+crt: derived climb rate from primary barometer (m/s)
+sms: time last sample was taken (s)
+offset: raw adjustment of barometer altitude, zeroed on calibration, possibly set by GCS (m)
+gndtemp: temperature on ground, specified by parameter or measured while on ground (degC)
+health: true if barometer is considered healthy
+
+GPS: Information received from GNSS systems attached to the autopilot
+status: GPS Fix type; 2D fix, 3D fix etc.
+gms: milliseconds since start of GPS Week
+gwk: weeks since 5 Jan 1980
+nsats: number of satellites visible (satellites)
+hdop: horizontal precision (m)
+lat: latitude (deglatitude)
+lng: longitude (deglongitude)
+alt: altitude (m)
+spd: ground speed (m/s)
+gcrs: ground course (degheading)
+vz: vertical speed (m/s)
+yaw: vehicle yaw (degheading)
+u: boolean value indicating whether this GPS is in use
+
+IMU: Inertial Measurement Unit data
+gyrx: measured rotation rate about X axis (rad/s)
+gyry: measured rotation rate about Y axis (rad/s)
+gyrz: measured rotation rate about Z axis (rad/s)
+accx: acceleration along X axis (m/s/s)
+accy: acceleration along Y axis (m/s/s)
+accz: acceleration along Z axis (m/s/s)
+eg: gyroscope error count
+ea: accelerometer error count
+t: IMU temperature (degC)
+gh: gyroscope health
+ah: accelerometer health
+ghz: gyroscope measurement rate (Hz)
+ahz: accelerometer measurement rate (Hz)
+
+IMU2: Inertial Measurement Unit data
+gyrx2: measured rotation rate about X axis (rad/s)
+gyry2: measured rotation rate about Y axis (rad/s)
+gyrz2: measured rotation rate about Z axis (rad/s)
+accx2: acceleration along X axis (m/s/s)
+accy2: acceleration along Y axis (m/s/s)
+accz2: acceleration along Z axis (m/s/s)
+eg2: gyroscope error count
+ea2: accelerometer error count
+t2: IMU temperature (degC)
+gh2: gyroscope health
+ah2: accelerometer health
+ghz2: gyroscope measurement rate (Hz)
+ahz2: accelerometer measurement rate (Hz)
+
+IMU3: Inertial Measurement Unit data
+gyrx3: measured rotation rate about X axis (rad/s)
+gyry3: measured rotation rate about Y axis (rad/s)
+gyrz3: measured rotation rate about Z axis (rad/s)
+accx3: acceleration along X axis (m/s/s)
+accy3: acceleration along Y axis (m/s/s)
+accz3: acceleration along Z axis (m/s/s)
+eg3: gyroscope error count
+ea3: accelerometer error count
+t3: IMU temperature (degC)
+gh3: gyroscope health
+ah3: accelerometer health
+ghz3: gyroscope measurement rate (Hz)
+ahz3: accelerometer measurement rate (Hz)
+
+ATT: Canonical vehicle attitude
+desroll: vehicle desired roll (deg)
+roll: achieved vehicle roll (deg)
+despitch: vehicle desired pitch (deg)
+pitch: achieved vehicle pitch (deg)
+desyaw: vehicle desired yaw (degheading)
+yaw: achieved vehicle yaw (degheading)
+errrp: lowest estimated gyro drift error (deg)
+erryaw: difference between measured yaw and DCM yaw estimate (degheading)
+
+NKF1: EKF2 estimator outputs
+roll1: Estimated roll (deg)
+pitch1: Estimated pitch (deg)
+yaw1: Estimated yaw (degheading)
+vn1: Estimated velocity (North component) (m/s)
+ve1: Estimated velocity (East component) (m/s)
+vd1: Estimated velocity (Down component) (m/s)
+dpd1: Filtered derivative of vertical position (down) (m/s)
+pn1: Estimated distance from origin (North component) (m)
+pe1: Estimated distance from origin (East component) (m)
+pd1: Estimated distance from origin (Down component) (m)
+gx1: Estimated gyro bias, X axis (deg/s)
+gy1: Estimated gyro bias, Y axis (deg/s)
+gz1: Estimated gyro bias, Z axis (deg/s)
+oh1: Height of origin above WGS-84 (m)
+
+NKF2: EKF2 estimator secondary outputs
+azbias2: Estimated accelerometer Z bias
+gsx2: Gyro Scale Factor (X-axis)
+gsy2: Gyro Scale Factor (Y-axis)
+gsz2: Gyro Scale Factor (Z-axis)
+vwn2: Estimated wind velocity (North component) (m/s)
+vwe2: Estimated wind velocity (East component) (m/s)
+mn2: Magnetic field strength (North component) (Gauss)
+me2: Magnetic field strength (East component) (Gauss)
+md2: Magnetic field strength (Down component) (Gauss)
+mx2: Magnetic field strength (body X-axis) (Gauss)
+my2: Magnetic field strength (body Y-axis) (Gauss)
+mz2: Magnetic field strength (body Z-axis) (Gauss)
+mi2: Magnetometer used for data
+
+NKF3: EKF2 innovations
+ivn3: Innovation in velocity (North component) (m/s)
+ive3: Innovation in velocity (East component) (m/s)
+ivd3: Innovation in velocity (Down component) (m/s)
+ipn3: Innovation in position (North component) (m)
+ipe3: Innovation in position (East component) (m)
+ipd3: Innovation in position (Down component) (m)
+imx3: Innovation in magnetic field strength (X-axis component) (Gauss)
+imy3: Innovation in magnetic field strength (Y-axis component) (Gauss)
+imz3: Innovation in magnetic field strength (Z-axis component) (Gauss)
+iyaw3: Innovation in vehicle yaw (UNKNOWN)
+ivt3: Innovation in true-airspeed (UNKNOWN)
+
+NKF4: EKF2 variances  SV, SP, SH and SM are probably best described as ‘Squared Innovation Test Ratios’ where values <1 tells us the measurement was accepted and >1 tells us it was rejected. They represent the square of the (innovation / maximum allowed innovation) where the innovation is the difference between predicted and measured value and the maximum allowed innovation is determined from the uncertainty of the measurement, uncertainty of the prediction and scaled using the number of standard deviations set by the innovation gate parameter for that measurement, eg EK2_MAG_I_GATE, EK2_HGT_I_GATE, etc
+sv4: Square root of the velocity variance
+sp4: Square root of the position variance
+sh4: Square root of the height variance
+sm4: Magnetic field variance
+svt4: tilt error convergence metric
+errrp4: Filtered error in roll/pitch estimate
+ofn4: Most recent position reset (North component) (UNKNOWN)
+ofe4: Most recent position reset (East component) (UNKNOWN)
+fs4: Filter fault status
+ts4: Filter timeout status bitmask (0:position measurement, 1:velocity measurement, 2:height measurement, 3:magnetometer measurement, 4:airspeed measurement)
+ss4: Filter solution status
+gps4: Filter GPS status
+pi4: Primary core index
+
+NKF5: EKF2 Sensor innovations (primary core) and general dumping ground
+ni5: Normalised flow variance
+fix5: Optical flow LOS rate vector innovations from the main nav filter (X-axis)
+fiy5: Optical flow LOS rate vector innovations from the main nav filter (Y-axis)
+afi5: Optical flow LOS rate innovation from terrain offset estimator
+hagl5: Height above ground level (m)
+offset5: Estimated vertical position of the terrain relative to the nav filter zero datum (UNKNOWN)
+ri5: Range finder innovations (UNKNOWN)
+rng5: Measured range (UNKNOWN)
+herr5: Filter ground offset state error (m)
+eang5: Magnitude of angular error (rad)
+evel5: Magnitude of velocity error (m/s)
+epos5: Magnitude of position error (m)
+
+NKF6: UNKNOWN
+roll6: UNKNOWN (deg)
+pitch6: UNKNOWN (deg)
+yaw6: UNKNOWN (degheading)
+vn6: UNKNOWN (m/s)
+ve6: UNKNOWN (m/s)
+vd6: UNKNOWN (m/s)
+dpd6: UNKNOWN
+pn6: UNKNOWN (m)
+pe6: UNKNOWN (m)
+pd6: UNKNOWN (m)
+gx6: UNKNOWN (deg/s)
+gy6: UNKNOWN (deg/s)
+gz6: UNKNOWN (deg/s)
+oh6: UNKNOWN (m)
+
+NKF7: UNKNOWN
+azbias7: UNKNOWN
+gsx7: UNKNOWN
+gsy7: UNKNOWN
+gsz7: UNKNOWN
+vwn7: UNKNOWN (m/s)
+vwe7: UNKNOWN (m/s)
+mn7: UNKNOWN (Gauss)
+me7: UNKNOWN (Gauss)
+md7: UNKNOWN (Gauss)
+mx7: UNKNOWN (Gauss)
+my7: UNKNOWN (Gauss)
+mz7: UNKNOWN (Gauss)
+mi7: UNKNOWN
+
+NKF8: UNKNOWN
+ivn8: UNKNOWN (m/s)
+ive8: UNKNOWN (m/s)
+ivd8: UNKNOWN (m/s)
+ipn8: UNKNOWN (m)
+ipe8: UNKNOWN (m)
+ipd8: UNKNOWN (m)
+imx8: UNKNOWN (Gauss)
+imy8: UNKNOWN (Gauss)
+imz8: UNKNOWN (Gauss)
+iyaw8: UNKNOWN (deg)
+ivt8: UNKNOWN (UNKNOWN)
+
+NKF9: UNKNOWN
+sv9: UNKNOWN
+sp9: UNKNOWN
+sh9: UNKNOWN
+sm9: UNKNOWN
+svt9: UNKNOWN
+errrp9: UNKNOWN (UNKNOWN)
+ofn9: UNKNOWN (UNKNOWN)
+ofe9: UNKNOWN (UNKNOWN)
+fs9: UNKNOWN
+ts9: UNKNOWN
+ss9: UNKNOWN
+gps9: UNKNOWN
+pi9: UNKNOWN
+
+NKQ1: EKF2 quaternion defining the rotation from NED to XYZ (autopilot) axes
+q11: Quaternion a term (UNKNOWN)
+q21: Quaternion b term (UNKNOWN)
+q31: Quaternion c term (UNKNOWN)
+q41: Quaternion d term (UNKNOWN)
+
+NKQ2: EKF2 quaternion defining the rotation from NED to XYZ (autopilot) axes
+q12: Quaternion a term (UNKNOWN)
+q22: Quaternion b term (UNKNOWN)
+q32: Quaternion c term (UNKNOWN)
+q42: Quaternion d term (UNKNOWN)
+
+AHR2: Backup AHRS data
+roll2: Estimated roll (deg)
+pitch2: Estimated pitch (deg)
+yaw2: Estimated yaw (degheading)
+alt2: Estimated altitude (m)
+lat2: Estimated latitude (deglatitude)
+lng2: Estimated longitude (deglongitude)
+q12: Estimated attitude quaternion component 1 (UNKNOWN)
+q22: Estimated attitude quaternion component 2 (UNKNOWN)
+q32: Estimated attitude quaternion component 3 (UNKNOWN)
+q42: Estimated attitude quaternion component 4 (UNKNOWN)
+
+POS: Canonical vehicle position
+lat: Canonical vehicle latitude (deglatitude)
+lng: Canonical vehicle longitude (deglongitude)
+alt: Canonical vehicle altitude (m)
+relhomealt: Canonical vehicle altitude relative to home (m)
+reloriginalt: Canonical vehicle altitude relative to navigation origin (m)
+
+PSC: UNKNOWN
+tpx: UNKNOWN (m)
+tpy: UNKNOWN (m)
+px: UNKNOWN (m)
+py: UNKNOWN (m)
+tvx: UNKNOWN (m/s)
+tvy: UNKNOWN (m/s)
+vx: UNKNOWN (m/s)
+vy: UNKNOWN (m/s)
+tax: UNKNOWN (m/s/s)
+tay: UNKNOWN (m/s/s)
+ax: UNKNOWN (m/s/s)
+ay: UNKNOWN (m/s/s)
+
+VIBE: Processed (acceleration) vibration information
+vibex: Primary accelerometer filtered vibration, x-axis
+vibey: Primary accelerometer filtered vibration, y-axis
+vibez: Primary accelerometer filtered vibration, z-axis
+clip0: UNKNOWN
+clip1: UNKNOWN
+clip2: UNKNOWN
+
+MAG: Information received from compasses
+magx: magnetic field strength in body frame (Gauss)
+magy: magnetic field strength in body frame (Gauss)
+magz: magnetic field strength in body frame (Gauss)
+ofsx: magnetic field offset in body frame (Gauss)
+ofsy: magnetic field offset in body frame (Gauss)
+ofsz: magnetic field offset in body frame (Gauss)
+mofsx: UNKNOWN (Gauss)
+mofsy: UNKNOWN (Gauss)
+mofsz: UNKNOWN (Gauss)
+health: true if the compass is considered healthy
+s: time measurement was taken (s)
+
+MAG2: Information received from compasses
+magx2: magnetic field strength in body frame (Gauss)
+magy2: magnetic field strength in body frame (Gauss)
+magz2: magnetic field strength in body frame (Gauss)
+ofsx2: magnetic field offset in body frame (Gauss)
+ofsy2: magnetic field offset in body frame (Gauss)
+ofsz2: magnetic field offset in body frame (Gauss)
+mofsx2: UNKNOWN (Gauss)
+mofsy2: UNKNOWN (Gauss)
+mofsz2: UNKNOWN (Gauss)
+health2: true if the compass is considered healthy
+s2: time measurement was taken (s)
+
+MAG3: Information received from compasses
+magx3: magnetic field strength in body frame (Gauss)
+magy3: magnetic field strength in body frame (Gauss)
+magz3: magnetic field strength in body frame (Gauss)
+ofsx3: magnetic field offset in body frame (Gauss)
+ofsy3: magnetic field offset in body frame (Gauss)
+ofsz3: magnetic field offset in body frame (Gauss)
+mofsx3: UNKNOWN (Gauss)
+mofsy3: UNKNOWN (Gauss)
+mofsz3: UNKNOWN (Gauss)
+health3: true if the compass is considered healthy
+s3: time measurement was taken (s)
+
+RATE: Desired and achieved vehicle attitude rates. Not logged in Fixed Wing Plane modes.
+rdes: vehicle desired roll rate (deg/s)
+r: achieved vehicle roll rate (deg/s)
+rout: normalized output for Roll
+pdes: vehicle desired pitch rate (deg/s)
+p: vehicle pitch rate (deg/s)
+pout: normalized output for Pitch
+ydes: vehicle desired yaw rate (deg/s)
+y: achieved vehicle yaw rate (deg/s)
+yout: normalized output for Yaw
+ades: desired vehicle vertical acceleration (m/s/s)
+a: achieved vehicle vertical acceleration (m/s/s)
+aout: percentage of vertical thrust output current being used
+
+CTRL: Attitude Control oscillation monitor diagnostics
+rmsrollp: LPF Root-Mean-Squared Roll Rate controller P gain (UNKNOWN)
+rmsrolld: LPF Root-Mean-Squared Roll rate controller D gain (UNKNOWN)
+rmspitchp: LPF Root-Mean-Squared Pitch Rate controller P gain (UNKNOWN)
+rmspitchd: LPF Root-Mean-Squared Pitch Rate controller D gain (UNKNOWN)
+rmsyaw: LPF Root-Mean-Squared Yaw Rate controller P+D gain (UNKNOWN)
+
+MOTB: Motor mixer information
+liftmax: Maximum motor compensation gain
+batvolt: Ratio between detected battery voltage and maximum battery voltage (V)
+batres: UNKNOWN (Ohm)
+thlimit: Throttle limit set due to battery current limitations
+
+ESC1: Feedback received from ESCs
+rpm1: reported motor rotation rate (rpm)
+volt1: Perceived input voltage for the ESC (V)
+curr1: Perceived current through the ESC (A)
+temp1: ESC temperature in centi-degrees C (degC)
+ctot1: current consumed total mAh
+
+ESC2: Feedback received from ESCs
+rpm2: reported motor rotation rate (rpm)
+volt2: Perceived input voltage for the ESC (V)
+curr2: Perceived current through the ESC (A)
+temp2: ESC temperature in centi-degrees C (degC)
+ctot2: current consumed total mAh
+
+ESC3: Feedback received from ESCs
+rpm3: reported motor rotation rate (rpm)
+volt3: Perceived input voltage for the ESC (V)
+curr3: Perceived current through the ESC (A)
+temp3: ESC temperature in centi-degrees C (degC)
+ctot3: current consumed total mAh
+
+ESC4: Feedback received from ESCs
+rpm4: reported motor rotation rate (rpm)
+volt4: Perceived input voltage for the ESC (V)
+curr4: Perceived current through the ESC (A)
+temp4: ESC temperature in centi-degrees C (degC)
+ctot4: current consumed total mAh
+
+ESC5: Feedback received from ESCs
+rpm5: reported motor rotation rate (rpm)
+volt5: Perceived input voltage for the ESC (V)
+curr5: Perceived current through the ESC (A)
+temp5: ESC temperature in centi-degrees C (degC)
+ctot5: current consumed total mAh
+
+ESC6: Feedback received from ESCs
+rpm6: reported motor rotation rate (rpm)
+volt6: Perceived input voltage for the ESC (V)
+curr6: Perceived current through the ESC (A)
+temp6: ESC temperature in centi-degrees C (degC)
+ctot6: current consumed total mAh
+
+ESC7: Feedback received from ESCs
+rpm7: reported motor rotation rate (rpm)
+volt7: Perceived input voltage for the ESC (V)
+curr7: Perceived current through the ESC (A)
+temp7: ESC temperature in centi-degrees C (degC)
+ctot7: current consumed total mAh
+
+ESC8: Feedback received from ESCs
+rpm8: reported motor rotation rate (rpm)
+volt8: Perceived input voltage for the ESC (V)
+curr8: Perceived current through the ESC (A)
+temp8: ESC temperature in centi-degrees C (degC)
+ctot8: current consumed total mAh
+
+CTUN: Control Tuning information
+thi: throttle input
+abst: angle boost
+tho: throttle output
+thh: calculated hover throttle
+dalt: desired altitude (m)
+alt: achieved altitude (m)
+balt: barometric altitude (m)
+dsalt: desired rangefinder altitude (m)
+salt: achieved rangefinder altitude (m)
+talt: terrain altitude (m)
+dcrt: desired climb rate (m/s)
+crt: climb rate (m/s)
+n: UNKNOWN (Hz)
+
+BAT: Gathered battery data
+volt: measured voltage (V)
+voltr: estimated resting voltage (V)
+curr: measured current (A)
+currtot: consumed Ah, current * time (UNKNOWN)
+enrgtot: consumed Wh, energy this battery has expended (W.s)
+temp: measured temperature (degC)
+res: estimated battery resistance (Ohm)
+
+POWR: System power information
+vcc: Flight board voltage (V)
+vservo: Servo rail voltage (V)
+flags: System power flags
+safety: Hardware Safety Switch status
+

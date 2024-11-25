@@ -1,11 +1,16 @@
-classdef Planner < TrajectoryPlanning.Ownship
+classdef Planner < TrajectoryPlanning.Ownship & TrajectoryPlanning.EnergyEfficiency
     properties
         scenario
         totalAgents
         totalNMACs
         experimentName
-        smoothnessRewardRate
-        windRewardRate
+        % smoothnessRewardRate
+        % windRewardRate
+        w_main
+        w_wind
+        w_energy
+        w_path
+        w_deviation
     end
 
     methods(Access = private)
@@ -95,9 +100,11 @@ classdef Planner < TrajectoryPlanning.Ownship
     end
 
     methods
-        function obj = Planner(scenario, totalAgents, totalNMACs, experimentName,windDataPath,center_lon,center_lat)
+        function obj = Planner(scenario, totalAgents, totalNMACs, experimentName,windDataPath)
             % Initialize the planner with scenario, total agents, and NMACs
-            obj@TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
+            obj@TrajectoryPlanning.Ownship(windDataPath);
+            obj@TrajectoryPlanning.EnergyEfficiency()   
+
             obj.scenario = scenario;
             obj.totalAgents = totalAgents;
             obj.totalNMACs = totalNMACs;
@@ -112,65 +119,166 @@ classdef Planner < TrajectoryPlanning.Ownship
             end
             [initialStates, goals] = obj.generateScenario(N, scenario);
         end
+        % Walmart and destination locations (latitude, longitude)
+        % walmartLocations = [
+        %     -96.889458, 33.142295;  % Walmart 1
+        %     -96.884394, 33.179801;  % Walmart 2
+        %     -96.806245, 33.146822;  % Walmart 3
+        %     -96.736346, 33.127893   % Walmart 4
+        %     ];
+        %
+        % destinationLocations = [
+        %     -96.879866, 33.145978;  % Destination 1
+        %     -96.875167, 33.183636;  % Destination 2
+        %     -96.795870, 33.148161;  % Destination 3
+        %     -96.746260, 33.130678   % Destination 4
+        %     ];
         function [assignedInitials, assignedGoals] = packageDeliveryScenario(obj)
-            % Setup DC package delivery scenario
-            % GWU = [38.900529, -77.049058];
-            % sichuanPavilion = [38.902443, -77.042052];
-            % watergateHotel = [38.899612, -77.055408];
-            % initialPositions = [GWU; sichuanPavilion; watergateHotel];
-            % 
-            % traderJos = [38.904193, -77.053129]; %GWU
-            % tonicAtQuincy = [38.898055, -77.046471]; %GWU
-            % foundingFarmers = [38.90028, -77.044415]; %sichuanPavilion
-            % theRitzHotel = [38.904526, -77.049072]; %sichuanPavilion
-            % fourSeason = [38.904269, -77.057294]; %watergateHotel
-            % bakedAndWired = [38.903887, -77.060437]; %watergateHotel
-            % finalPositions = [traderJos;foundingFarmers;tonicAtQuincy;theRitzHotel;fourSeason;bakedAndWired];
-            Maydan = [38.920027, -77.03127];
-            watergateHotel = [38.899612, -77.055408];
-            JoesStake = [38.900027, -77.033922];
-            initialPositions = [Maydan; JoesStake; watergateHotel];
-            cornerLat = [ 38.9228   38.9228   38.8990   38.8990];
-            cornerLon = [-77.0274  -77.0580  -77.0580  -77.0274];
+            % Walmart and destination locations (latitude, longitude)
+           walmartLocations = [
+                -71.143513, 42.253617;  % Origin 
+                -71.138921, 42.255935;  % Destination 1 
+                -71.143513, 42.253617;  % Origin
+                -71.144135, 42.249582   % Destination 2
+                ];
 
-            PhilipsCollection = [38.91151, -77.046854];%Maydan
-            wholeFoolds = [38.909499, -77.033568];%Maydan
-            Dumbarton = [38.910883, -77.055618];%watergateHotel
-            foundingFarmers = [38.90028, -77.044415]; %watergateHotel
-            agoralDC = [38.91063, -77.038251];%JoesStake
-            % MuseumMansion = [38.908363, -77.045874];%JoesStake
-            AperoLa = [38.909246, -77.055494];%JoesStake
-            % finalPositions = [PhilipsCollection;wholeFoolds;Dumbarton;foundingFarmers;agoralDC;AperoLa];
+            destinationLocations = [
+                -71.138921, 42.255935;  % Destination 1
+                -71.143513, 42.253617;  % Origin
+                -71.144135, 42.249582;  % Destination 2
+                -71.143513, 42.253617   % Origin
+                ];
 
-            finalPositions = [PhilipsCollection;wholeFoolds;Dumbarton;foundingFarmers;agoralDC;AperoLa];
-            Dupont = [38.910944, -77.042726, 10];
 
-            origin = Dupont;
+            % Bounding box for the area of interest
+            lat_min = 42.230629;
+            lat_max = 42.259;
+            lon_min = -71.146753;
+            lon_max = -71.137655;
+
+            % Compute the center of the bounding box as the reference point (0, 0)
+            center_lat = (lat_min + lat_max) / 2;
+            center_lon = (lon_min + lon_max) / 2;
+
             % Average radius of Earth in meters
             R = 6371000;
 
-            % Conversion factors
-            metersPerDegreeLat = 111000;
-            metersPerDegreeLon = metersPerDegreeLat * cos(deg2rad(origin(1)));
+            % Conversion factors (latitude and longitude to meters)
+            metersPerDegreeLat = 111000;  % Approximate value for 1 degree of latitude in meters
+            metersPerDegreeLon = metersPerDegreeLat * cos(deg2rad(center_lat));  % Adjust for longitude
 
-            % Function to convert lat, lon to x, y
-            latLonToXY = @(lat, lon) [(lon - origin(2)) * metersPerDegreeLon, (lat - origin(1)) * metersPerDegreeLat];
+            % Function to convert lat, lon to x, y (relative to center point)
+            latLonToXY = @(lat, lon) [(lon - center_lon) * metersPerDegreeLon, (lat - center_lat) * metersPerDegreeLat];
 
-            % Convert initial positions
-            initialXY = zeros(size(initialPositions, 1), 2);
-            for i = 1:size(initialPositions, 1)
-                initialXY(i, :) = latLonToXY(initialPositions(i, 1), initialPositions(i, 2));
+            % Convert initial (Walmart) positions to x, y
+            initialXY = zeros(size(walmartLocations, 1), 2);
+            for i = 1:size(walmartLocations, 1)
+                initialXY(i, :) = latLonToXY(walmartLocations(i, 2), walmartLocations(i, 1));
             end
 
-            % Convert final positions
-            finalXY = zeros(size(finalPositions, 1), 2);
-            for i = 1:size(finalPositions, 1)
-                finalXY(i, :) = latLonToXY(finalPositions(i, 1), finalPositions(i, 2));
+            % Convert final (Destination) positions to x, y
+            finalXY = zeros(size(destinationLocations, 1), 2);
+            for i = 1:size(destinationLocations, 1)
+                finalXY(i, :) = latLonToXY(destinationLocations(i, 2), destinationLocations(i, 1));
             end
 
-            assignedInitials = [initialXY(repmat(1:size(initialXY, 1), 2, 1), :),ones(6,1)*1000];
-            assignedGoals = [finalXY,ones(6,1)*1000];
+            % Assigning initial (Walmart) positions and final (destination) positions with altitude
+            assignedInitials = [initialXY, ones(size(initialXY, 1), 1) * 100];  % 100m altitude for all
+            assignedGoals = [finalXY, ones(size(finalXY, 1), 1) * 100];  % 100m altitude for all
+
+            % Plot initial and goal locations
+            figure;
+            hold on;
+            plot(initialXY(:, 1), initialXY(:, 2), 'bo', 'MarkerSize', 10, 'DisplayName', 'Initial Locations');
+            plot(finalXY(:, 1), finalXY(:, 2), 'rx', 'MarkerSize', 10, 'DisplayName', 'Goal Locations');
+            xlabel('X (meters)');
+            ylabel('Y (meters)');
+            title('Initial and Goal Locations in ENU Coordinates');
+            legend('show');
+            grid on;
+            axis equal;
+            hold off;
         end
+        function [assignedInitials, assignedGoals, yawAngles] = packageDeliveryScenarioWithYaw(obj)
+            % Walmart and destination locations (latitude, longitude)
+            walmartLocations = [
+                -71.138921, 42.255935;  % Origin 
+                -71.143513, 42.253617;  % Destination 1 
+                -71.138921, 42.255935; % Origin
+                -71.144135, 42.249582   % Destination 2
+                ];
+
+            destinationLocations = [
+                -71.143513, 42.253617;  % Destination 1
+                -71.138921, 42.255935;  % Origin
+                -71.144135, 42.249582;  % Destination 2
+                -71.138921, 42.255935   % Origin
+                ];
+
+            % Bounding box for the area of interest
+            lat_min = 42.230629;
+            lat_max = 42.259;
+            lon_min = -71.146753;
+            lon_max = -71.137655;
+
+            % Compute the center of the bounding box as the reference point (0, 0)
+            center_lat = (lat_min + lat_max) / 2;
+            center_lon = (lon_min + lon_max) / 2;
+
+            % Average radius of Earth in meters
+            R = 6371000;
+
+            % Conversion factors (latitude and longitude to meters)
+            metersPerDegreeLat = 111000;  % Approximate value for 1 degree of latitude in meters
+            metersPerDegreeLon = metersPerDegreeLat * cos(deg2rad(center_lat));  % Adjust for longitude
+
+            % Function to convert lat, lon to x, y (relative to center point)
+            latLonToXY = @(lat, lon) [(lon - center_lon) * metersPerDegreeLon, (lat - center_lat) * metersPerDegreeLat];
+
+            % Convert initial (Walmart) positions to x, y
+            initialXY = zeros(size(walmartLocations, 1), 2);
+            for i = 1:size(walmartLocations, 1)
+                initialXY(i, :) = latLonToXY(walmartLocations(i, 2), walmartLocations(i, 1));
+            end
+
+            % Convert final (Destination) positions to x, y
+            finalXY = zeros(size(destinationLocations, 1), 2);
+            for i = 1:size(destinationLocations, 1)
+                finalXY(i, :) = latLonToXY(destinationLocations(i, 2), destinationLocations(i, 1));
+            end
+
+            % Calculate yaw angles (in radians)
+            yawAngles = zeros(size(initialXY, 1), 1);
+            for i = 1:size(initialXY, 1)
+                deltaX = finalXY(i, 1) - initialXY(i, 1);
+                deltaY = finalXY(i, 2) - initialXY(i, 2);
+                yawAngles(i) = atan2(deltaY, deltaX);  % Yaw angle
+            end
+
+            % Assigning initial (Walmart) positions and final (destination) positions with altitude
+            assignedInitials = [initialXY, ones(size(initialXY, 1), 1) * 100];  % 100m altitude for all
+            assignedGoals = [finalXY, ones(size(finalXY, 1), 1) * 100];  % 100m altitude for all
+
+            % Plot initial and goal locations along with yaw directions
+            figure;
+            hold on;
+            plot(initialXY(:, 1), initialXY(:, 2), 'bo', 'MarkerSize', 10, 'DisplayName', 'Initial Locations');
+            plot(finalXY(:, 1), finalXY(:, 2), 'rx', 'MarkerSize', 10, 'DisplayName', 'Goal Locations');
+
+            % Plot yaw direction as arrows
+            quiver(initialXY(:, 1), initialXY(:, 2), cos(yawAngles), sin(yawAngles), 0.3, 'k', 'LineWidth', 2, 'MaxHeadSize', 2, 'DisplayName', 'Yaw Direction');
+
+            xlabel('X (meters)');
+            ylabel('Y (meters)');
+            title('Initial and Goal Locations with Yaw Directions');
+            legend('show');
+            grid on;
+            axis equal;
+            hold off;
+        end
+
+        
+
 
         function yawAngles = initializeYaw(obj, assignedInitials,assignedGoals)
             % Assuming assignedInitials and assignedGoals are your arrays and are of size 6x3
@@ -260,7 +368,7 @@ classdef Planner < TrajectoryPlanning.Ownship
                 end
 
                 % Compute Negative Peaks if condition is met
-                if true  % Replace with actual condition if needed
+                if false  % Replace with actual condition if needed
                     [intruderX, intruderY, intruderZ] = deal(drone.position(1), drone.position(2), drone.position(3));
                     distance = sqrt((ownX - intruderX)^2 + (ownY - intruderY)^2 + (ownZ - intruderZ)^2);
 
@@ -274,7 +382,7 @@ classdef Planner < TrajectoryPlanning.Ownship
 
             % Compute Positive Peaks
             [goalX, goalY, goalZ] = deal(ownship.goal(1), ownship.goal(2), ownship.goal(3));
-            positivePeaks = [200, goalX, goalY, goalZ, 0.999, inf];
+            positivePeaks = [500, goalX, goalY, goalZ, 0.999, inf];
         end
 
         function drone = computeIntruderTrajectory(obj, drone, actions)
@@ -344,11 +452,12 @@ classdef Planner < TrajectoryPlanning.Ownship
             % 
             % plot3(X,Y,Z)
 
-            if obj.smoothnessRewardRate == 0
-                nextStep = 10;
-            else
-                nextStep = 100;
-            end
+            % if obj.smoothnessRewardRate == 0
+            %     nextStep = 10;
+            % else
+            %     nextStep = 10;
+            % end
+            nextStep = 10;
 
             % Extract One Step and Future States
             oneStepStates = futureTraj(nextStep, :, :); % Change this to 100 for optimal performance 
@@ -422,97 +531,82 @@ classdef Planner < TrajectoryPlanning.Ownship
             if true
                 altitude = states(:,:,3)';
                 altitude = altitude(:);
-                belowLevel = altitude < 80;
-                penalityFunc = 5000 - altitude;
-                totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc(belowLevel);
+                belowLevel = altitude < 95;
+                aboveLevel = altitude > 115;        
+                penalityFunc_below = 5000 - altitude;
+                % Define penalty for above 115m based on how much the altitude exceeds 115m
+                scale_factor = 500;  % Adjust this to control penalty magnitude
+                penalityFunc_above = scale_factor * (altitude - 115);  % Proportional to height increase above 115m
+
+                % Apply penalties
+                totalValues(belowLevel) = totalValues(belowLevel) - penalityFunc_below(belowLevel);
+                totalValues(aboveLevel) = totalValues(aboveLevel) - penalityFunc_above(aboveLevel);
             end
+
+            % This is the reward the deals with collision avoidance and
+            % goal navigation
+            mainReward = reshape(totalValues, lenFutureTraj, numFuturePoints)';
+
             % extract x and y pos and speeds of the aircraft for wind energy reward 
             x = states(:,:,1);
             y = states(:,:,2);
             Vx = states(:,:,4);
             Vy = states(:,:,5);
             
-
             % Interpolate wind speed components at aircraft position
-            % Wx = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_U, x, y, 'linear');
-            % Wy = interp2(ownship.X_grid, ownship.Y_grid, ownship.grid_V, x, y, 'linear');
-            [Wx, Wy] = calculateWindComponents(ownship, x(:), y(:));
+            [Wx, Wy] = ownship.get_wind_at(x(:), y(:));
             Wx = reshape(Wx, lenFutureTraj, numFuturePoints)';
-            Wy = reshape(Wy, lenFutureTraj, numFuturePoints)';
+            Wy =  reshape(Wy, lenFutureTraj, numFuturePoints)';
 
 
             % windEnergyReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
 
             if true %obj.energyRewardRate ~= 0
-                % Add battery energy related rewards
+                % Here, we handle energy cost related rewards
                 distances = calculateDistances(obj,ownship.currentStates(1:3), states(:,:,1:3));
-                % % energyReq = 2067*exp(0.0128*distances);
                 energyReq = predictEnergy(obj,distances);
-                % 
-                smoothnessReward = energyReq.*linspace(0,obj.smoothnessRewardRate,size(energyReq,1))'; %change energyRewardRate
+                energyReward = energyReq; %.*linspace(0,obj.smoothnessRewardRate,size(energyReq,1))'; %change energyRewardRate
+                normalized_pathlengthReward = 0;
+                normalized_deviationReward = 0;
                 
-                windReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy)*obj.windRewardRate;
-                energyReward = windReward - smoothnessReward; %double check the +/- logic here 
+                % Here, we hadle the deviation and path length rewards
+                if size(ownship.traveledPath, 1) >= 2
+                    deviationReward = computeTrajectoryDeviationReward(obj, ownship, states(:,:,1:3));
+
+                    % deviationReward = computeDeviationReward(obj, ownship, states(:,:,1:3));
+                    pathLengthReward = computeTrajectoryLengthReward(obj, ownship, states(:,:,1:3));
+                    normalized_pathlengthReward = obj.normalizeReward(pathLengthReward, [-10000, 10000]);
+                    normalized_deviationReward = obj.normalizeReward(-deviationReward, [-10000, 10000]);%.*logspace(0,-10,size(energyReward,1))';
+
+                    debugReward = false;
+                    if debugReward
+                        % visualizeDeviationRewards(obj, ownship, states(:,:,1:3), calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy));
+                        % visualizeDeviationRewards(obj, ownship, states(:,:,1:3), -deviationReward)
+                        % visualizeDeviationRewards(obj, ownship, states(:,:,1:3), smoothnessReward);
+                        % visualizeDeviationRewards(obj, ownship, states(:,:,1:3), pathLengthRewards);
+                        % visualizeDeviationRewards(obj, ownship, states(:,:,1:3), mainReward);
+                    end
+                end
+                windReward = calculateWindEnergyReward(obj, Vx, Vy, Wx, Wy);
+                
             else
                 energyReward = 0;
-
-                % totalValues = totalValues - altChange*1000*obj.energyRewardRate;
             end
-            % energyReqs = obj.energyReqPerAction.interpolatedEnergyReqs*obj.energyRewardRate;
 
-            totalValues = reshape(totalValues, lenFutureTraj, numFuturePoints)' + energyReward;
+            % Now, let's normalize all rewards for easy tuning
+            % Normalize each reward to [0, 1] or [-1, 1]
+            normalized_mainReward = mainReward;%obj.normalizeReward(mainReward, [0, 100]);
+            normalized_windReward = obj.normalizeReward(windReward, [-10000, 10000]);
+            normalized_energyReward = obj.normalizeReward(energyReward, [-10000, 10000]);%.*logspace(0,-10,size(energyReward,1))';
+
+            totalValues = obj.w_main * normalized_mainReward + ...
+                obj.w_wind * normalized_windReward + ...
+                obj.w_energy * normalized_energyReward + ...
+                obj.w_path * normalized_pathlengthReward + ...
+                obj.w_deviation * normalized_deviationReward;
         end
 
-        function distances = calculateDistances(obj, ownshipCurrentStates, states)
-            % Extract sizes
-            numExperiments = size(states, 2);
-            numWaypoints = size(states, 1);
-
-            % Expand the reference state to match the dimensions of states
-            expandedReference = repmat(ownshipCurrentStates, [numWaypoints, 1, numExperiments]);
-
-            % Permute expandedReference to match the desired dimensions
-            expandedReference = permute(expandedReference, [1, 3, 2]);
-
-            % Calculate the change in position (deltaPosition) relative to the reference
-            deltaPosition = states - expandedReference;
-
-            % Calculate the Euclidean distances with altitude sign adjustment
-            distances = sqrt(sum(deltaPosition.^2, 3));
-        end
-
-        function totalReward = calculateWindEnergyReward(obj, vx, vy, wx, wy)
-            % Compute dot products and magnitudes
-            dotProducts = vx .* wx + vy .* wy;
-            magsV = sqrt(vx.^2 + vy.^2);
-            magsW = sqrt(wx.^2 + wy.^2);
-
-            % Compute cosine of the angle
-            cosTheta = dotProducts ./ (magsV .* magsW);
-
-            % Ensure the cosine values are within the valid range [-1, 1]
-            cosTheta = max(min(cosTheta, 1), -1);
-
-            % Constants
-            A = 500;
-            B = 100;
-
-            % Calculate the reward
-            reward = (A .* cosTheta + B) ;
-
-            % Return the total reward
-            totalReward = reward;
-        end
-
-
-        function energyArray = predictEnergy(obj,distances)
-            % Define the coefficients for each step
-            aCoeffs = [0, 520.699, 203.742, 127.606, 86.3024, 71.8159, 63.1053, 57.9294, 50.7294, 46.399];
-            bCoeffs = [0, 369.168, 869.01, 1119.61, 1459.52, 1368.97, 1279.89, 1128.54, 1144.29, 1183.82];
-
-            % Calculate the energy using the linear function in a vectorized way
-            energyArray = aCoeffs' .* distances + bCoeffs';
-        end
+ 
 
         function [optimizedValues, allValues] = valueOptimized(obj,distanceToPeaks, rewardLimits,discountFactor, rewards)
 

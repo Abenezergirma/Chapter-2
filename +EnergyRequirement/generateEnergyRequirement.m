@@ -7,7 +7,7 @@ projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2';
 %% Load Trajectory Data
 % Load x, y, and z trajectories from the specified files
 trajectoriesPath = 'TrajectoryPlanningResults';
-numDrones = 2;
+numDrones = 4;
 % Create the full file path
 % Create the full file path
 baseFileNameX = strcat(experimentName,'XTrajectory');
@@ -23,34 +23,6 @@ load(filePathX)
 load(filePathY)
 load(filePathZ)
 
-numAircraft = size(xTraj, 1);  % Number of aircraft
-N = size(xTraj, 2);            % Original length of trajectories
-
-% Initialize new arrays with two additional columns for the new points
-newXTraj = zeros(numAircraft, N + 2);
-newYTraj = zeros(numAircraft, N + 2);
-newZTraj = zeros(numAircraft, N + 2);
-
-% for i = 1:numAircraft
-%     % Extract the initial and final coordinates for each aircraft
-%     initialX = xTraj(i, 1);
-%     initialY = yTraj(i, 1);
-%     initialZ = zTraj(i, 1) - 50;  % 100 meters below the initial z value
-% 
-%     finalX = xTraj(i, end);
-%     finalY = yTraj(i, end);
-%     finalZ = zTraj(i, end) - 50;  % 100 meters below the final z value
-% 
-%     % Construct new trajectories with added points
-%     newXTraj(i, :) = [initialX, xTraj(i, :), finalX];
-%     newYTraj(i, :) = [initialY, yTraj(i, :), finalY];
-%     newZTraj(i, :) = [initialZ, zTraj(i, :), finalZ];
-% end
-% 
-% % Replace old trajectories with the new ones
-% xTraj = newXTraj;
-% yTraj = newYTraj;
-% zTraj = newZTraj;
 
 
 %% Define File and Path Related Properties
@@ -66,13 +38,25 @@ T18Wrapper.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/En
 
 % Construct the full path for battery parameters
 T18Wrapper.BatteryParams = fullfile(T18Wrapper.resultsPath,T18Wrapper.experimentName);
-numDrones = size(xTraj,1);
-numWaypoints = 30;
 
-% Concatenate trajectories and smooth them
-trajectories = cat(3, xTraj', yTraj', zTraj');
-wayPoints = T18Wrapper.smoothTrajectoryVectorized(trajectories, numWaypoints);
+combineTrajectories = true;
+if combineTrajectories
+    % [xTraj, yTraj, zTraj] = T18Wrapper.preprocessTrajectories(xTraj, yTraj, zTraj);
+    numWaypoints = 40;
+    [xTraj, yTraj, zTraj] = T18Wrapper.sampleAndCombineTrajectories(xTraj, yTraj, zTraj, numWaypoints);
+    wayPoints = cat(3, xTraj', yTraj', zTraj');
+else
+    numWaypoints = 32;
+    % Concatenate trajectories and smooth them
+    lambda = 0.3;
+    trajectories = cat(3, xTraj', yTraj', zTraj');
+    smoothness = 80;
+    plotTrajectories = true;
+    wayPoints = T18Wrapper.smoothAndSampleTrajectory(trajectories, smoothness, lambda, numWaypoints, plotTrajectories);
+end
 
+
+%%
 % plotTrajectoriesAndWaypoints(T18Wrapper, trajectories1, wayPoints1, trajectories2, wayPoints2)
 %% Visualization
 % Specify the UAV to visualize and plot its trajectory and waypoints

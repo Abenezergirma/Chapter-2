@@ -25,7 +25,7 @@ class PlotsPaper:
         self.current_input = None 
         self.voltage_matlab = None 
         self.SOC_matlab = None 
-        self.soc_threshold = 0.30
+        self.soc_threshold = 0.50
         self.probability_sucess = None
         self.experiment_index = None 
         self.timeb_matlab = None
@@ -163,17 +163,17 @@ class PlotsPaper:
 
             ax.axvline(x=self.soc_threshold, color='red', label="SOC threshold", linewidth=2, linestyle='--')
             ax.legend(prop={'size': 8}, loc='upper right')  # Smaller legend font size
-            ax.set_xlabel(f'SOC at {len(soc_profile[0])} sec', fontsize=10)  # Smaller font size
+            ax.set_xlabel(f'SOC at End of Flight', fontsize=10)  # Smaller font size
             ax.set_ylabel('Density', fontsize=10)  # Smaller font size
-            ax.set_title(f'Battery SOC Prediction - Aircraft {i+1}', fontsize=10)  # Slightly larger title font size
+            # ax.set_title(f'Battery SOC Prediction - Aircraft {i+1}', fontsize=10)  # Slightly larger title font size
             ax.grid(True, linestyle='--', alpha=0.7)
 
             mean_experiment_SOC = np.mean(mean_SOC)
             ax.text(0.05, 0.9, f"Mean SOC: {mean_experiment_SOC:.3f}", transform=ax.transAxes, fontsize=10, color='blue')  # Smaller font size
 
             plt.tight_layout()
-            filename = f'Battery_SOC_Prediction_Aircraft_{i+1}.png'
-            plt.savefig(os.path.join(self.current_directory, filename), format='png')
+            filename = f'Battery_SOC_Prediction_Aircraft_{i+1}.pdf'
+            plt.savefig(os.path.join(self.current_directory, filename), format='pdf')
             plt.close(fig)
         
     def plot_voltage(self):
@@ -211,8 +211,9 @@ if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.abspath(__file__))  # Get the current directory of the script
     # for experiment in range(0,6):
         # results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/fullMissionBatteryParams.mat".format(experiment))
+    results_directory = os.path.join(current_directory, "..", "EnergyRequirementResults/Journal_main1_wind0.2_energy0_path0_deviation0.9fullMissionBatteryParams.mat")
     pickle_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles/")
     plotter = PlotsPaper(pickle_path)
-    # plotter.plot_soc_predictions_save_independetly()
-    # plotter.plot_soc_predictions()
+    plotter.plot_soc_predictions_save_independetly()
+    plotter.plot_soc_predictions()
     plotter.plot_voltage()

@@ -229,7 +229,7 @@ function Update(block)
     dt=parameters.sampleTime;
     block.Dwork(1).Data(1) = Tb + Tbdot*dt;
     block.Dwork(1).Data(2) = Vo + Vodot*dt;
-    block.Dwork(1).Data(3) = Vsn + Vsndot*dt;
+     block.Dwork(1).Data(3) = Vsn + Vsndot*dt;
     block.Dwork(1).Data(4) = Vsp + Vspdot*dt;
     block.Dwork(1).Data(5) = qnB + qnBdot*dt;
     block.Dwork(1).Data(6) = qnS + qnSdot*dt;

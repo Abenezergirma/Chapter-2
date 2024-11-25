@@ -1,23 +1,23 @@
 % This script is used to run reward function related experiments
 clear all; clc; close all;
-projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2';
+projectPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2';
 maxPower = 10;
 rewardExpts = RewardFunctionExperiment.RewardFunctionExperiments(maxPower);
-timestep = rewardExpts.lowFidelityModel.timeStep;
+% timestep = rewardExpts.timeStep;
 simulationTime = 10;
-contorlActions = rewardExpts.generateControlCombinations;
-trajectories = rewardExpts.runLowFidelityModel(contorlActions, simulationTime);
-setWaypoints = rewardExpts.smoothTrajectoryVectorized(trajectories(:,:,1:3),6);
+% contorlActions = rewardExpts.generateControlCombinations;
+% trajectories = rewardExpts.runLowFidelityModel(contorlActions, simulationTime);
+% setWaypoints = rewardExpts.smoothTrajectoryVectorized(trajectories(:,:,1:3),6);
 
 % define all file and path related properties 
-rewardExpts.highFidelityModelPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2/+EnergyRequirement/UAVSimulinkModel';
+rewardExpts.highFidelityModelPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/+EnergyRequirement/UAVSimulinkModel';
 rewardExpts.highFidelityModelRunner = 'runDetailedT18Model';
-rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter 2/EnergyRequirementResults';
+rewardExpts.resultsPath = '/home/abenezertaye/Desktop/Research/Codes/Chapter-2/EnergyRequirementResults';
 rewardExpts.experimentName = 'rewardExperimentBatteryParams.mat';
 rewardExpts.BatteryParams = fullfile(rewardExpts.resultsPath,rewardExpts.experimentName);
 rewardExpts.energyRequirement = 'reqEnergy.mat';
 
-sampleWaypoints = setWaypoints;%(:,1:20:10000,:);
+% sampleWaypoints = setWaypoints;%(:,1:20:10000,:);
 trajID = 1:2:100;
 
 load("futureTraj.mat")

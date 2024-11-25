@@ -1,36 +1,40 @@
-function plotTrajectories(experimentName,smoothnessRewardRate,windRewardRate)
+function plotTrajectories(experimentName,w_main,w_wind,w_energy,w_path,w_deviation)
 % clear; close all; clc;
 % Future work - Write test cases for the trajectory planner
 
 %% Initialization
 resultsPath = 'TrajectoryPlanningResults';
-totalAgents = 2;
+totalAgents = 4;
 scenarioSelector = struct('circle','circle', 'random','random', 'hexagon','hexagon');
 totalNMACs = 0;
-center_lon = (-96.94 + -96.7600)/2;
-center_lat = (33.06 + 33.22)/2;
-windDataPath = 'Wind Forecasts/smaller_area_wind_data.json';
-planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,...
-    experimentName, windDataPath,center_lon,center_lat);
+center_lon = (-71.146753 + -71.137655)/2;
+center_lat = (42.230629 + 42.259)/2;
+windDataPath = 'Wind Forecasts/filtered_wind_data.mat';
+planner = TrajectoryPlanning.Planner(scenarioSelector.hexagon, totalAgents, totalNMACs,experimentName, windDataPath);
 % planner.energyRewardRate = energyRewardRate;
-planner.smoothnessRewardRate = smoothnessRewardRate;
-planner.windRewardRate = smoothnessRewardRate;
+planner.w_main = w_main;
+planner.w_wind = w_wind;
+planner.w_energy = w_energy;
+planner.w_path = w_path;
+planner.w_deviation = w_deviation;
+
 %% Generate Initial States and Goals
 % [initialStates, goals] = planner.scenarioGenerator(totalAgents, 'hexagon');
 
 %% Instantiate Ownship Class for Each Aircraft
-% [assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
-% yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
+[assignedInitials, assignedGoals] = planner.packageDeliveryScenario;
+
+[assignedInitials, assignedGoals, yawAngles] = planner.packageDeliveryScenarioWithYaw;
+% [assignedInitials, assignedGoals] = planner.scenarioGenerator(totalAgents, 'circle');
+% assignedInitials(:,1) = [-81.5439; -132.6474];%[-81.5439;295.7351];
+% assignedInitials(:,2) = [47.6467; -400.2383 ];%[47.6467 ; 304.9447 ];
+% assignedGoals(:,1) = [-132.6474; -81.5439]; %[295.7351;-81.5439 ];
+% assignedGoals(:,2) = [-400.2383; 47.6467];%[304.9447;47.6467];
+
+yawAngles = planner.initializeYaw(assignedInitials,assignedGoals);
 % 
-% initialStates = [assignedInitials(1:totalAgents,:),zeros(totalAgents,9)];
-% initialStates(:,9) = yawAngles(1:totalAgents,:);
-
-[initialStates, assignedGoals] = planner.scenarioGenerator(totalAgents, 'circle');
-initialStates(:,1) = [100;700];
-initialStates(:,2) = [100;450];
-assignedGoals(:,1) = [700;100];
-assignedGoals(:,2) = [450;100];
-
+initialStates = [assignedInitials(1:totalAgents,1:3),zeros(totalAgents,9)];
+initialStates(:,9) = yawAngles(1:totalAgents,:);
 
 droneList = cell(1, totalAgents);
 for i = 1:totalAgents
@@ -69,10 +73,11 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
 
 %% Supporting Functions
     function drone = initializeDrone(id, initState, goal)
-        drone = TrajectoryPlanning.Ownship(windDataPath,center_lon,center_lat);
+        drone = TrajectoryPlanning.Ownship(windDataPath);
         drone.aircraftID = id;
         drone.goal = goal;
         drone = updateAircraftStates(drone, initState);
+        drone.yaw = initState(1,9);
     end
 
     function [droneList,numLeft] = updateDrones(droneList, planner, teamActions,numLeft)
@@ -138,6 +143,7 @@ analyzeAndSaveResults(stepTimer, totalNMACs,droneList, experimentName);
             % Organizing best trajectories
             bestTraject = droneList{i}.bestTrajectory;
             bestTrajectory(i,:,:,1:size(bestTraject,1)/10) = permute(reshape(bestTraject, 10, size(bestTraject,1)/10, 3), [1 3 2]);
+
         end
         % Create the full file path
         baseFileNameX = strcat(experimentName,'XTrajectory');

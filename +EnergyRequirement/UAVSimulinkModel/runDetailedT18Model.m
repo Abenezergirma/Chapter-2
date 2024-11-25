@@ -11,41 +11,20 @@ battery.sampleTime = 0.1;
 windspecs=load('params/TarotT18_windspecs.mat').windspecs;
 center_lon = (-96.94 + -96.7600)/2;
 center_lat = (33.06 + 33.22)/2;
-windDataPath = 'smaller_area_wind_data.json';
 
-% Create BusElement for the 'values' field, assuming it's a 100x100 matrix of doubles
-valuesElement = Simulink.BusElement;
-valuesElement.Name = 'values';
-valuesElement.Dimensions = [100 100];
-valuesElement.DataType = 'double';
 
-% Create BusElement for the 'dimensions' field, assuming it's a 2-element vector of doubles
-dimensionsElement = Simulink.BusElement;
-dimensionsElement.Name = 'dimensions';
-dimensionsElement.Dimensions = [1 2];
-dimensionsElement.DataType = 'double';
+data = load('filtered_wind_data.mat');
+x_grid = linspace(min(data.x), max(data.x), 1000);  % Adjust the grid size as needed
+y_grid = linspace(min(data.y), max(data.y), 1000);
+[X_grid, Y_grid] = meshgrid(x_grid, y_grid);
+X_velocity_grid = griddata(data.x, data.y, data.x_velocity, X_grid, Y_grid, 'linear');
+Y_velocity_grid = griddata(data.x, data.y, data.y_velocity, X_grid, Y_grid, 'linear');
 
-% Create the bus object that encapsulates both elements
-arrayBus = Simulink.Bus;
-arrayBus.Elements = [valuesElement, dimensionsElement];
-
-[grid_u, grid_v, x_grid, y_grid] = processWindData(windDataPath, center_lon, center_lat);
-
-grid_U.time = 0;
-grid_U.signals.values = grid_u; 
-grid_U.signals.dimensions = size(grid_u);
-
-grid_V.time = 0;
-grid_V.signals.values = grid_v; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
-grid_V.signals.dimensions = size(grid_v);
-
-X_grid.time = 0;
-X_grid.signals.values = x_grid; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
-X_grid.signals.dimensions = size(x_grid);
-
-Y_grid.time = 0;
-Y_grid.signals.values = y_grid; % yourArray is one of grid_U, grid_V, X_grid, Y_grid
-Y_grid.signals.dimensions = size(y_grid);
+% Save gridded wind data to workspace
+assignin('base', 'X_velocity_grid', X_velocity_grid);
+assignin('base', 'Y_velocity_grid', Y_velocity_grid);
+assignin('base', 'x_grid', x_grid);
+assignin('base', 'y_grid', y_grid);
 
 
 

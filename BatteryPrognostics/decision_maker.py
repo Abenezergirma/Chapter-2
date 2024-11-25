@@ -38,6 +38,6 @@ class MissionRiskAssessment(PlotsPaper):
 if __name__ == "__main__":
     current_directory = os.path.dirname(os.path.abspath(__file__))  # Get the current directory of the script
     pickle_file_path = os.path.join(current_directory, "..", "BatteryPrognosticsResults/Pickles")
-    threshold = 0.3 
+    threshold = 0.5
     mission_assessment = MissionRiskAssessment(pickle_file_path, threshold)
     mission_assessment.make_decision()

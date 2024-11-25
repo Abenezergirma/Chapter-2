@@ -199,14 +199,14 @@ class BatteryElectroChemEOD(PrognosticsModel):
 
         'x0': {
             
-            # 'qpS': 3.21548e+04,
-            # 'qpB': 2.1436533334e+04,
-            # 'qnS': 4.8232e+04,
-            # 'qnB': 3.21548e+04,
+            'tb': 292.1,  # in K, about 18.95 C
             'Vo': 0,
             'Vsn': 0,
             'Vsp': 0,
-            'tb': 292.1  # in K, about 18.95 C
+            'qnB': 3.21548e+04,
+            'qnS': 4.8232e+04,
+            'qpB': 2.1436533334e+04,
+            'qpS': 3.21548e+04
         },
 
         'process_noise': 1e-3,
@@ -300,7 +300,7 @@ class BatteryElectroChemEOD(PrognosticsModel):
         charge_EOD = (x['qnS'] + x['qnB'])/self.parameters['qnMax']
         voltage_EOD = (z['v'] - self.parameters['VEOD'])/self.parameters['VDropoff'] 
         return {
-            'EOD': min(charge_EOD, voltage_EOD)
+            'EOD': (min(charge_EOD, voltage_EOD) - 0.05)
         }
 
     def output(self, x):

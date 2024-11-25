@@ -1,0 +1,116 @@
+AHRS_GPS_GAIN: 1
+AHRS GPS gain
+Note: This parameter is for advanced users. This controls how much to use the GPS to correct the attitude. This should never be set to zero for a plane as it would result in the plane losing control in turns. For a plane please use the default value of 1.0.
+
+ATC_ANG_RLL_P: 2.6875
+Roll axis angle controller P gain
+Roll axis angle controller P gain. Converts the error between the desired roll angle and actual angle to a desired roll rate
+
+ATC_ANG_PIT_P: 4.5
+Pitch axis angle controller P gain
+Pitch axis angle controller P gain. Converts the error between the desired pitch angle and actual angle to a desired pitch rate
+
+ATC_ANG_YAW_P: 4.5
+Yaw axis angle controller P gain
+Yaw axis angle controller P gain. Converts the error between the desired yaw angle and actual angle to a desired yaw rate
+
+ATC_RAT_RLL_P: 0.1655
+(AC_AttitudeControl_Heli): Roll axis rate controller P gain
+Roll axis rate controller P gain. Converts the difference between desired roll rate and actual roll rate into a motor speed output
+
+ATC_RAT_RLL_I: 0.135
+(AC_AttitudeControl_Heli): Roll axis rate controller I gain
+Roll axis rate controller I gain. Corrects long-term difference in desired roll rate vs actual roll rate
+
+ATC_RAT_RLL_IMAX: 0.5
+(AC_AttitudeControl_Multi): Roll axis rate controller I gain maximum
+Roll axis rate controller I gain maximum. Constrains the maximum motor output that the I gain will output
+
+ATC_RAT_RLL_D: 0.01234
+(AC_AttitudeControl_Multi): Roll axis rate controller D gain
+Roll axis rate controller D gain. Compensates for short-term change in desired roll rate vs actual roll rate
+
+ATC_RAT_PIT_P: 0.1655
+(AC_AttitudeControl_Heli): Pitch axis rate controller P gain
+Pitch axis rate controller P gain. Converts the difference between desired pitch rate and actual pitch rate into a motor speed output
+
+ATC_RAT_PIT_I: 0.135
+(AC_AttitudeControl_Multi): Pitch axis rate controller I gain
+Pitch axis rate controller I gain. Corrects long-term difference in desired pitch rate vs actual pitch rate
+
+ATC_RAT_PIT_IMAX: 0.5
+(AC_AttitudeControl_Heli): Pitch axis rate controller I gain maximum
+Pitch axis rate controller I gain maximum. Constrains the maximum motor output that the I gain will output
+
+ATC_RAT_PIT_D: 0.01234
+(AC_AttitudeControl_Heli): Pitch axis rate controller D gain
+Pitch axis rate controller D gain. Compensates for short-term change in desired pitch rate vs actual pitch rate
+
+ATC_RAT_YAW_P: 0.5
+(AC_AttitudeControl_Heli): Yaw axis rate controller P gain
+Yaw axis rate controller P gain. Converts the difference between desired yaw rate and actual yaw rate into a motor speed output
+
+ATC_RAT_YAW_I: 0.018
+(AC_AttitudeControl_Heli): Yaw axis rate controller I gain
+Yaw axis rate controller I gain. Corrects long-term difference in desired yaw rate vs actual yaw rate
+
+ATC_RAT_YAW_IMAX: 0.5
+(AC_AttitudeControl_Heli): Yaw axis rate controller I gain maximum
+Yaw axis rate controller I gain maximum. Constrains the maximum motor output that the I gain will output
+
+ATC_RAT_YAW_D: 0
+(AC_AttitudeControl_Heli): Yaw axis rate controller D gain
+Yaw axis rate controller D gain. Compensates for short-term change in desired yaw rate vs actual yaw rate
+
+PSC_POSZ_P: 1
+Position (vertical) controller P gain
+Position (vertical) controller P gain. Converts the difference between the desired altitude and actual altitude into a climb or descent rate which is passed to the throttle rate controller
+
+PSC_VELZ_P: 5
+Velocity (vertical) controller P gain
+Velocity (vertical) controller P gain. Converts the difference between desired vertical speed and actual speed into a desired acceleration that is passed to the throttle acceleration controller
+
+PSC_ACCZ_P: 0.5
+Acceleration (vertical) controller P gain
+Acceleration (vertical) controller P gain. Converts the difference between desired vertical acceleration and actual acceleration into a motor output
+
+PSC_ACCZ_I: 1
+Acceleration (vertical) controller I gain
+Acceleration (vertical) controller I gain. Corrects long-term difference in desired vertical acceleration and actual acceleration
+
+PSC_ACCZ_IMAX: 800
+Acceleration (vertical) controller I gain maximum
+Acceleration (vertical) controller I gain maximum. Constrains the maximum pwm that the I term will generate
+
+PSC_ACCZ_D: 0
+Acceleration (vertical) controller D gain
+Acceleration (vertical) controller D gain. Compensates for short-term change in desired vertical acceleration vs actual acceleration
+
+PSC_POSXY_P: 1
+Position (horizontal) controller P gain
+Position controller P gain. Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller
+
+PSC_VELXY_P: 2
+Velocity (horizontal) P gain
+Note: This parameter is for advanced users. Velocity (horizontal) P gain. Converts the difference between desired velocity to a target acceleration
+
+PSC_VELXY_I: 1
+Velocity (horizontal) I gain
+Note: This parameter is for advanced users. Velocity (horizontal) I gain. Corrects long-term difference in desired velocity to a target acceleration
+
+PSC_VELXY_D: 0.5
+Velocity (horizontal) D gain
+Note: This parameter is for advanced users. Velocity (horizontal) D gain. Corrects short-term changes in velocity
+
+PSC_VELXY_IMAX: 1000
+Velocity (horizontal) integrator maximum
+Note: This parameter is for advanced users. Velocity (horizontal) integrator maximum. Constrains the target acceleration that the I gain will output
+
+AHRS_YAW_P: 0.2
+Yaw P
+Note: This parameter is for advanced users. This controls the weight the compass or GPS has on the heading. A higher value means the heading will track the yaw source (GPS or compass) more rapidly.
+
+AHRS_RP_P: 0.2
+AHRS RP_P
+Note: This parameter is for advanced users. This controls how fast the accelerometers correct the attitude
+

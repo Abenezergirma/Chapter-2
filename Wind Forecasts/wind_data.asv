@@ -1,175 +1,135 @@
-clear all; clc;
-% define area
-lower_left = [-96.84, 33.14];
-upper_right = [-96.81,33.17];
-num_points = 1000;
-lons = linspace(lower_left(1), upper_right(1), round(sqrt(num_points)));
-lats = linspace(lower_left(2), upper_right(2), round(sqrt(num_points)));
-
-coordinates = generateCoordinates(lons, lats);
+clear all; clc; close all
+visualizeWind = VisualizeWindData();
+lons = visualizeWind.lons;
+lats = visualizeWind.lats;
+coordinates = visualizeWind.generateCoordinates(lons, lats);
 longitudes = coordinates(:,1);
 latitudes = coordinates(:,2);
+[m_lat, m_lon] = visualizeWind.latLonToMeters(latitudes, longitudes);
 
-coefs_u = [ 0.00000000e+00  1.61094414e-10 -7.37058611e-03 -1.48809651e-06...
- -3.68089481e-13 -7.95141020e-06  2.10701150e-17  9.01146727e-10...
-  1.59724993e-17  6.10108129e-10  7.28957673e-14  8.49416234e-19...
-  7.23116917e-13  4.75030720e-19  1.14705027e-12];
-intercept_u = 10.362042657397877;
+x = linspace(-100,700,500);%linspace(-100,1000,500);
+y = linspace(-100,450,500);
 
-coefs_v = [ 0.00000000e+00 -2.00488263e-10  8.08528198e-03 -7.92842850e-07...
-  4.03295347e-13  3.32875723e-06 -1.06781708e-17 -7.96012216e-11...
- -1.33310503e-17 -4.23514366e-09  7.95707308e-14 -4.36936906e-19...
- -5.13247109e-14 -4.72047951e-19 -1.17203841e-12];
-intercept_v = 3.69631689881155;
-degree = 4;
+% Get wind components
+[Wx, Wy] = visualizeWind.trigWindFunc(x, y);
 
-center_lon = (-96.84 + -96.81) / 2;
-center_lat = (33.14 + 33.17) / 2; 
+% Example trajectory (replace with actual data)
+trajectory = [linspace(100, 700, 100)', linspace(100, 450, 100)'];
 
-[m_lat, m_lon] = latLonToMeters(latitudes, longitudes, center_lat, center_lon);
+[lat_traj, lon_traj] = visualizeWind.metersToLatLon(x, y);
 
-xs = linspace(-1396.37606554, 1396.37606554,1287);
-ys = linspace(-1667.92389967, 1667.92389967,  1287);
+% Plot the wind data and trajectory
+visualizeWind.plotTrigWind(deg2rad(lon_traj),deg2rad(lat_traj), Wx, Wy);
 
+%%
+xWind0 = load('Friscosmoothness0.1wind0XTrajectory_02.mat');
+yWind0 = load('Friscosmoothness0.1wind0YTrajectory_02.mat');
+zWind0 = load('Friscosmoothness0.1wind0ZTrajectory_02.mat');
 
-[Us, Vs] = calculateWindComponents(coefs_u, intercept_u, coefs_v, intercept_v, m_lon, m_lat, degree);
-[u,v] = calculateWindComponents(coefs_u, intercept_u, coefs_v, intercept_v, 1000, 1000, degree)
+xWind1 = load('Friscosmoothness0.1wind1XTrajectory_02.mat');
+yWind1 = load('Friscosmoothness0.1wind1YTrajectory_02.mat');
+zWind1 = load('Friscosmoothness0.1wind1ZTrajectory_02.mat');
 
 
-plotWindData(deg2rad(longitudes), deg2rad(latitudes), Us, Vs)
+uav =1;
 
-function [Us, Vs] = calculateWindComponents(coefs_u, intercept_u, coefs_v, intercept_v, xs, ys, degree)
-    % Calculate wind components in MATLAB, correctly handling intercepts.
+plot3(xWind0.xTraj(uav,:),xWind0yTraj(uav,:),zTraj(uav,:))
 
-    % Ensure xs and ys are column vectors
-    xs = xs(:);
-    ys = ys(:);
 
-    % Combine xs and ys into a single matrix of shape (n_samples, n_features)
-    features = [xs, ys];
+%%%%%%%%%%%%%%%%%%%%%
 
-    % Generate polynomial features
-    polyFeatures = generatePolynomialFeatures(features, degree);
 
-    % Calculate the wind components by dot product, then add the intercept
-    Us = polyFeatures * coefs_u' + intercept_u;
-    Vs = polyFeatures * coefs_v' + intercept_v;
-end
 
-function polyFeatures = generatePolynomialFeatures(features, degree)
-    % Manually generate polynomial features up to a specified degree for 2D features
-    [n_samples, ~] = size(features);
 
-    % Initialize a list to hold all feature combinations
-    featureList = {ones(n_samples, 1)}; % Start with the bias (intercept) term
-
-    % Generate feature combinations
-    for d = 1:degree
-        for i = 0:d
-            j = d - i;
-            newFeature = (features(:,1).^i) .* (features(:,2).^j);
-            featureList{end+1} = newFeature;
-        end
-    end
-
-    % Combine all features into a single matrix
-    polyFeatures = horzcat(featureList{:});
-end
-
-function plotWindData(longitudes, latitudes, U_pred, V_pred)
+% Flatten the mesh grid for plotting
+[longitudes, latitudes] = meshgrid(x, y);
 longitudes = longitudes(:);
 latitudes = latitudes(:);
-U_pred = U_pred(:);
-V_pred = V_pred(:);
-% Calculate the magnitudes of original and predicted wind components
-% Normalize U_pred and V_pred
-norm_factor = sqrt(U_pred.^2 + V_pred.^2);
-U_normalized = U_pred ./ norm_factor;
-V_normalized = V_pred ./ norm_factor;
+U_pred = Wx(:);
+V_pred = Wy(:);
 
-% Create a mesh grid for contour plots
-[grid_x, grid_y] = meshgrid(linspace(min(longitudes), max(longitudes), 100), ...
-    linspace(min(latitudes), max(latitudes), 100));
+% Example trajectory (replace with actual data)
+% trajectory = [linspace(100, 700, 100)', linspace(100, 450, 100)'];
 
-% Interpolate magnitudes onto the grid
-grid_z_pred = griddata(longitudes, latitudes, norm_factor, grid_x, grid_y, 'linear');
+[lat_traj, lon_traj] = visualizeWind.metersToLatLon(latitudes, longitudes);
+% 
+trajectory = [NaN,NaN];%[lon_traj;lat_traj]';
+% % plotWindData(deg2rad(longitudes), deg2rad(latitudes), Us, Vs)
+visualizeWind.plotWindDataAndTrajectory(deg2rad(lon_traj), deg2rad(lat_traj), U_pred, V_pred, deg2rad(trajectory))
 
-% Plotting original wind field with contours
+% Plot the wind data and trajectory
+% visualizeWind.plotWindDataAndTrajectory(longitudes, latitudes, U_pred, V_pred, trajectory);
+
+
+% 
+% [Us, Vs] = visualizeWind.calculateWindComponents(m_lon, m_lat);
+% % [u,v] = calculateWindComponents(coefs_u, intercept_u, coefs_v, intercept_v, 1000, 1000, degree)
+% [lat_traj, lon_traj] = visualizeWind.metersToLatLon(x, y);
+% 
+% trajectory = [NaN,NaN];%[lon_traj;lat_traj]';
+% % plotWindData(deg2rad(longitudes), deg2rad(latitudes), Us, Vs)
+% visualizeWind.plotWindDataAndTrajectory(deg2rad(longitudes), deg2rad(latitudes), Us, Vs, deg2rad(trajectory))
+
+%%
+if false
+load('futureTraj.mat')
+nextStep = 10;
+
+% Extract One Step and Future States
+oneStepStates = futureTraj(nextStep, :, :); % Change this to 100 for optimal performance
+futIndex = floor(linspace(1, length(futureTraj(:, 1, 1)), 10));
+futureStates = futureTraj(futIndex, :, :); % Ensure size assertion as needed
+
+index = 35;
+
+X = futureStates(:,1:index:end,1);
+Y = futureStates(:,1:index:end,2);
+Z = futureStates(:,1:index:end,3);
+velocity = futureStates(:,1:index:end,4:6);
+% plot3(X,Y,Z,'o')
+
+% Assuming X, Y, Z are 10x1144 and velocity is 10x1144x3
+[nTimeStamps, nTrajectories] = size(X); % Get the size of the trajectories
+
+% Prepare the figure
 figure;
-
-contourf(grid_x, grid_y, grid_z_pred', 15, 'LineStyle', 'none');
-cbar = colorbar;
-cbar.Label.String = 'Wind Speed (magnitude)'; % Corrected label setting
 hold on;
-quiver(longitudes, latitudes, U_normalized, V_normalized, 0.5, 'b');
-title('Predicted Wind Field');
-xlabel('Longitude');
-ylabel('Latitude');
 grid on;
-end
-function plotWindDataAnd(longitudes, latitudes, U_pred, V_pred, trajectory)
-    longitudes = longitudes(:);
-    latitudes = latitudes(:);
-    U_pred = U_pred(:);
-    V_pred = V_pred(:);
-    % Calculate the magnitudes of original and predicted wind components
-    % Normalize U_pred and V_pred
-    norm_factor = sqrt(U_pred.^2 + V_pred.^2);
-    U_normalized = U_pred ./ norm_factor;
-    V_normalized = V_pred ./ norm_factor;
-    
-    % Create a mesh grid for contour plots
-    [grid_x, grid_y] = meshgrid(linspace(min(longitudes), max(longitudes), 100), ...
-        linspace(min(latitudes), max(latitudes), 100));
-    
-    % Interpolate magnitudes onto the grid
-    grid_z_pred = griddata(longitudes, latitudes, norm_factor, grid_x, grid_y, 'linear');
-    
-    % Plotting original wind field with contours
-    figure;
-    
-    contourf(grid_x, grid_y, grid_z_pred', 15, 'LineStyle', 'none');
-    cbar = colorbar;
-    cbar.Label.String = 'Wind Speed (magnitude)'; % Corrected label setting
-    hold on;
-    quiver(longitudes, latitudes, U_normalized, V_normalized, 0.5, 'b');
-    
-    % Plot the trajectory
-    % Assuming the trajectory is an array with rows as [x, y] coordinates
-    plot(trajectory(:,1), trajectory(:,2), 'r', 'LineWidth', 2);
-    
-    title('Predicted Wind Field');
-    xlabel('Longitude');
-    ylabel('Latitude');
-    grid on;
-end
+axis equal;
 
+xlabel('X');
+ylabel('Y');
+zlabel('Z');
+title('3D Trajectories with Velocity Vectors');
 
-function [m_lat, m_lon] = latLonToMeters(lat, lon, center_lat, center_lon)
-    % Earth's radius in meters
-    R = 6371000;
-    
-    % Convert latitude and longitude differences to radians
-    delta_lat = (lat - center_lat) * pi / 180;
-    delta_lon = (lon - center_lon) * pi / 180;
-    
-    % Approximate conversion to meters
-    m_lat = delta_lat * R;
-    m_lon = delta_lon * R * cos(center_lat * pi / 180);
-end
-
-function coordinates = generateCoordinates(lons, lats)
-    % Initialize an empty array to hold the coordinate pairs
-    coordinates = [];
-
-    % Iterate through each lon and lat value to create [lon, lat] pairs
-    for i = 1:length(lons)
-        for j = 1:length(lats)
-            % Append the [lon, lat] pair to the coordinates array
-            coordinates = [coordinates; [lons(i), lats(j)]];
+% Loop through each trajectory and timestamp
+for i = 1:nTrajectories
+    for j = 1:nTimeStamps
+        % Plot each point in the trajectory
+        plot3(X(j,i), Y(j,i), Z(j,i), '--or', 'Color','red');
+        
+        % Extract the velocity components for the current point
+        vx = velocity(j,i,1);
+        vy = velocity(j,i,2);
+        vz = velocity(j,i,3);
+        
+        % Normalize the velocity vector to get the unit vector
+        % This step ensures the vector is only used to indicate direction
+        vMagnitude = sqrt(vx^2 + vy^2 + vz^2);
+        if vMagnitude ~= 0 % Avoid division by zero for zero velocity
+            vx_unit = 8*vx / vMagnitude;
+            vy_unit = 8*vy / vMagnitude;
+            vz_unit = 8*vz / vMagnitude;
+            
+            % Plot the velocity vector as an arrow starting from the current point
+            quiver3(X(j,i), Y(j,i), Z(j,i), vx_unit, vy_unit, vz_unit, 1.5, 'MaxHeadSize', 2, 'Color','blue');
         end
     end
 end
 
+% Adjusting the view for better visualization
+view(3); % Sets the view to 3D
+
+end
 
 
